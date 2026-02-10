@@ -1,24 +1,8 @@
-import sys
 from unittest.mock import MagicMock, PropertyMock, patch
 
-# Mock ecflow
-sys.modules["ecflow"] = MagicMock()
+import pytest
 
-
-# Mock textual.work to be a no-op decorator for tests
-def mock_work(*args, **kwargs):
-    if len(args) == 1 and callable(args[0]):
-        return args[0]
-    return lambda f: f
-
-
-import textual  # noqa: E402, I001
-
-textual.work = mock_work
-
-import pytest  # noqa: E402
-
-from ectop.app import Ectop  # noqa: E402
+from ectop.app import Ectop
 from ectop.widgets.content import MainContent  # noqa: E402
 from ectop.widgets.sidebar import SuiteTree  # noqa: E402
 
