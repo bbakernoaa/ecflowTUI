@@ -1,10 +1,10 @@
 import ecflow
-from textual.app import App, ComposeResult
-from textual.widgets import Header, Footer, Tree, RichLog, TabbedContent, TabPane, Static
-from textual.containers import Container, Horizontal, VerticalScroll
-from textual.binding import Binding
 from rich.syntax import Syntax
 from rich.text import Text
+from textual.app import App, ComposeResult
+from textual.binding import Binding
+from textual.containers import Container, Horizontal, VerticalScroll
+from textual.widgets import Footer, Header, RichLog, Static, TabbedContent, TabPane, Tree
 
 # --- Configuration ---
 ECFLOW_HOST = "localhost"
@@ -18,8 +18,9 @@ STATE_MAP = {
     "aborted": "🔴",
     "submitted": "🟡",
     "active": "🔥",
-    "suspended": "🟠"
+    "suspended": "🟠",
 }
+
 
 class EcflowTUI(App):
     """A Textual-based TUI for monitoring and controlling ecFlow."""
@@ -28,7 +29,7 @@ class EcflowTUI(App):
     Screen {
         background: #1a1b26;
     }
-    
+
     /* Left Sidebar (Tree) */
     #sidebar {
         width: 30%;
@@ -36,35 +37,35 @@ class EcflowTUI(App):
         border-right: solid #565f89;
         background: #16161e;
     }
-    
+
     Tree {
         background: #16161e;
         color: #a9b1d6;
         padding: 1;
     }
-    
+
     /* Right Content (Tabs) */
     #main_content {
         width: 70%;
         height: 100%;
     }
-    
+
     TabbedContent {
         height: 100%;
     }
-    
+
     /* Content Areas */
     RichLog {
         background: #24283b;
         color: #c0caf5;
         border: none;
     }
-    
+
     .code_view {
         background: #24283b;
         padding: 1;
         width: 100%;
-        height: auto; 
+        height: auto;
     }
     """
 
@@ -80,28 +81,25 @@ class EcflowTUI(App):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
-        
+
         yield Horizontal(
             # Left Sidebar
-            Container(
-                Tree("ecFlow Server", id="suite_tree"),
-                id="sidebar"
-            ),
+            Container(Tree("ecFlow Server", id="suite_tree"), id="sidebar"),
             # Right Content
             Container(
                 TabbedContent(
-                    TabPane("Output", id="tab_output", children=[
-                        RichLog(markup=True, highlight=True, id="log_output")
-                    ]),
-                    TabPane("Script (.ecf)", id="tab_script", children=[
-                        VerticalScroll(Static("", id="view_script", classes="code_view"))
-                    ]),
-                    TabPane("Job (Processed)", id="tab_job", children=[
-                        VerticalScroll(Static("", id="view_job", classes="code_view"))
-                    ]),
+                    TabPane("Output", id="tab_output", children=[RichLog(markup=True, highlight=True, id="log_output")]),
+                    TabPane(
+                        "Script (.ecf)",
+                        id="tab_script",
+                        children=[VerticalScroll(Static("", id="view_script", classes="code_view"))],
+                    ),
+                    TabPane(
+                        "Job (Processed)", id="tab_job", children=[VerticalScroll(Static("", id="view_job", classes="code_view"))]
+                    ),
                 ),
-                id="main_content"
-            )
+                id="main_content",
+            ),
         )
         yield Footer()
 
@@ -109,7 +107,7 @@ class EcflowTUI(App):
         """Connect to ecFlow and load the initial tree."""
         try:
             self.client = ecflow.Client(ECFLOW_HOST, ECFLOW_PORT)
-            self.client.ping() # Check connection
+            self.client.ping()  # Check connection
             self.action_refresh()
         except RuntimeError as e:
             self.notify(f"Connection Failed: {e}", severity="error", timeout=10)
@@ -122,22 +120,22 @@ class EcflowTUI(App):
         """Fetch suites from server and rebuild the tree."""
         tree = self.query_one("#suite_tree", Tree)
         tree.clear()
-        
+
         try:
             self.client.sync_local()
             defs = self.client.get_defs()
-            
+
             if not defs:
                 tree.root.label = "Server Empty"
                 return
-            
+
             tree.root.label = f"🌍 {ECFLOW_HOST}:{ECFLOW_PORT}"
-            
+
             for suite in defs.suites:
                 self._add_node(tree.root, suite)
-                
+
             self.notify("Tree Refreshed")
-            
+
         except Exception as e:
             self.notify(f"Refresh Error: {e}", severity="error")
 
@@ -146,23 +144,23 @@ class EcflowTUI(App):
         # Determine icon and style based on node type and state
         state = str(ecflow_node.get_state())
         icon = STATE_MAP.get(state, "⚪")
-        
-        is_family = isinstance(ecflow_node, (ecflow.Family, ecflow.Suite))
+
+        is_family = isinstance(ecflow_node, ecflow.Family | ecflow.Suite)
         type_icon = "📂" if is_family else "⚙️"
-        
-        label = Text(f"{type_icon} {ecflow_node.name()} ")
+
+        label = Text(f"{icon} {type_icon} {ecflow_node.name()} ")
         label.append(f"[{state}]", style="bold italic")
-        
+
         # Add node to UI
         # We store the absolute path in `data` to reference it later
         new_ui_node = parent_ui_node.add(
-            label, 
+            label,
             data=ecflow_node.abs_node_path(),
-            expand=False # Collapse by default to save space
+            expand=False,  # Collapse by default to save space
         )
-        
+
         # Recurse if there are children
-        if hasattr(ecflow_node, 'nodes'):
+        if hasattr(ecflow_node, "nodes"):
             for child in ecflow_node.nodes:
                 self._add_node(new_ui_node, child)
 
@@ -181,15 +179,15 @@ class EcflowTUI(App):
             return
 
         self.notify(f"Loading files for {path}...")
-        
+
         # 1. Output Log (RichLog)
-        self._load_log_content(path, 'jobout', "#log_output")
-        
+        self._load_log_content(path, "jobout", "#log_output")
+
         # 2. Script (Syntax Highlighted)
-        self._load_code_content(path, 'script', "#view_script")
-        
+        self._load_code_content(path, "script", "#view_script")
+
         # 3. Job (Syntax Highlighted)
-        self._load_code_content(path, 'job', "#view_job")
+        self._load_code_content(path, "job", "#view_job")
 
     def _load_log_content(self, path, file_type, widget_id):
         widget = self.query_one(widget_id, RichLog)
@@ -216,7 +214,7 @@ class EcflowTUI(App):
         """Generic helper to run ecflow commands."""
         if not path:
             return
-        
+
         try:
             # Dynamically call the method on self.client (e.g., client.suspend(path))
             getattr(self.client, command_name)(path)
@@ -226,10 +224,22 @@ class EcflowTUI(App):
         except Exception as e:
             self.notify(f"Error: {e}", severity="error")
 
-    def action_suspend(self): self._run_client_command("suspend", self.get_selected_path())
-    def action_resume(self): self._run_client_command("resume", self.get_selected_path())
-    def action_kill(self): self._run_client_command("kill", self.get_selected_path())
-    def action_force(self): self._run_client_command("force_complete", self.get_selected_path())
+    def action_suspend(self):
+        self._run_client_command("suspend", self.get_selected_path())
+
+    def action_resume(self):
+        self._run_client_command("resume", self.get_selected_path())
+
+    def action_kill(self):
+        self._run_client_command("kill", self.get_selected_path())
+
+    def action_force(self):
+        self._run_client_command("force_complete", self.get_selected_path())
+
+
+def main():
+    EcflowTUI().run()
+
 
 if __name__ == "__main__":
-    EcflowTUI().run()
+    main()

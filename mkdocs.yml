@@ -1,0 +1,14 @@
+site_name: ecflowTUI
+theme:
+  name: material
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+
+nav:
+  - Home: index.md
+  - Reference: reference.md

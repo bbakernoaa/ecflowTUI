@@ -1,0 +1,6 @@
+#
+# This file is generated from pyproject.toml
+#
+ecflow
+textual>=0.7.0
+rich>=13.0.0
