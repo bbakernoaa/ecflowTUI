@@ -29,10 +29,14 @@ jobs:
         run: |
           pip install -e .[docs]
 
-      - name: Build and Deploy
-        shell: bash -el {0}
-        run: |
-          # Set git config for gh-deploy
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          mkdocs gh-deploy --force
+      - name: Build
+        run: mkdocs build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          force_orphan: true # <--- THIS FIXES THE "MISSING BRANCH" ISSUE
+          user_name: "github-actions[bot]"
+          user_email: "github-actions[bot]@users.noreply.github.com"
