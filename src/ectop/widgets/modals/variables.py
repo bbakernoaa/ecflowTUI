@@ -134,8 +134,8 @@ class VariableTweaker(ModalScreen):
             # Get row key
             row_key = list(table.rows.keys())[row_index].value
             if row_key.startswith("inh_"):
-                 self.app.notify("Cannot delete inherited variables", severity="error")
-                 return
+                self.app.notify("Cannot delete inherited variables", severity="error")
+                return
             try:
                 self.client.alter(self.node_path, "delete_variable", row_key)
                 self.app.notify(f"Deleted {row_key}")

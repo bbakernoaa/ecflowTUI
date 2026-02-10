@@ -4,7 +4,7 @@ ecFlow Client Wrapper for ectop.
 .. note::
     If you modify features, API, or usage, you MUST update the documentation immediately.
 """
-from typing import Any
+
 import ecflow
 
 # --- State Icons ---
@@ -18,6 +18,7 @@ STATE_MAP: dict[str, str] = {
     "suspended": "🟠",
 }
 
+
 class EcflowClient:
     """
     A wrapper around ecflow.Client providing simplified access and error handling.
@@ -29,6 +30,7 @@ class EcflowClient:
     port : int
         The port of the ecFlow server.
     """
+
     def __init__(self, host: str = "localhost", port: int = 3141) -> None:
         self.host: str = host
         self.port: int = port

@@ -5,7 +5,6 @@ from unittest.mock import MagicMock, PropertyMock, patch
 sys.modules["ecflow"] = MagicMock()
 
 import pytest  # noqa: E402
-
 from ectop.app import Ectop  # noqa: E402
 from ectop.widgets.content import MainContent  # noqa: E402
 from ectop.widgets.sidebar import SuiteTree  # noqa: E402
@@ -15,6 +14,7 @@ from ectop.widgets.sidebar import SuiteTree  # noqa: E402
 def app():
     return Ectop()
 
+
 def test_app_bindings(app):
     bindings = {b.key: b.action for b in app.BINDINGS}
     assert "/" in bindings
@@ -22,6 +22,7 @@ def test_app_bindings(app):
     assert "e" in bindings
     assert "t" in bindings
     assert "v" in bindings
+
 
 def test_search_logic():
     # Create mock nodes
@@ -46,10 +47,11 @@ def test_search_logic():
     tree.scroll_to_node = MagicMock()
 
     # We need to manually call the method since it's an instance method
-    with patch.object(SuiteTree, 'cursor_node', new_callable=PropertyMock) as mock_cursor:
+    with patch.object(SuiteTree, "cursor_node", new_callable=PropertyMock) as mock_cursor:
         mock_cursor.return_value = None
         assert SuiteTree.find_and_select(tree, "post") is True
     tree.select_node.assert_called_with(node2)
+
 
 def test_live_log_update():
     content_area = MainContent()
@@ -65,8 +67,10 @@ def test_live_log_update():
     rich_log.write.assert_called_with(" added more")
     assert content_area.last_log_size == len("initial content added more")
 
+
 def test_why_inspector_parsing():
     from ectop.widgets.modals.why import WhyInspector
+
     client = MagicMock()
     inspector = WhyInspector("/path/to/node", client)
 
@@ -77,8 +81,10 @@ def test_why_inspector_parsing():
     inspector._parse_expression(parent_ui_node, "(/a == complete) and (/b == complete)", defs)
     parent_ui_node.add.assert_any_call("AND (All must be true)", expand=True)
 
+
 def test_variable_tweaker_refresh():
     from ectop.widgets.modals.variables import VariableTweaker
+
     client = MagicMock()
     tweaker = VariableTweaker("/path/to/node", client)
 

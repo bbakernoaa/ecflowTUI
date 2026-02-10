@@ -104,8 +104,9 @@ class WhyInspector(ModalScreen):
 
         # Leaf node (actual condition)
         import re
+
         # Match paths and optional state comparison
-        match = re.search(r'(/[a-zA-Z0-9_/]+)(\s*==\s*(\w+))?', expr_str)
+        match = re.search(r"(/[a-zA-Z0-9_/]+)(\s*==\s*(\w+))?", expr_str)
         if match:
             path = match.group(1)
             expected_state = match.group(3) or "complete"

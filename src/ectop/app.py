@@ -21,6 +21,7 @@ from ectop.widgets.sidebar import SuiteTree
 ECFLOW_HOST = "localhost"
 ECFLOW_PORT = 3141
 
+
 class Ectop(App):
     """A Textual-based TUI for monitoring and controlling ecFlow."""
 
@@ -329,7 +330,7 @@ class Ectop(App):
 
         try:
             content = self.ecflow_client.file(path, "script")
-            with tempfile.NamedTemporaryFile(suffix=".ecf", delete=False, mode='w') as f:
+            with tempfile.NamedTemporaryFile(suffix=".ecf", delete=False, mode="w") as f:
                 f.write(content)
                 temp_path = f.name
 
@@ -367,6 +368,7 @@ class Ectop(App):
             The absolute path of the node to re-queue.
         """
         from ectop.widgets.modals.confirm import ConfirmModal
+
         # _run_client_command is a worker, so it's safe to call from the callback
         self.push_screen(ConfirmModal(f"Re-queue {path} now?", lambda: self._run_client_command("requeue", path)))
 

@@ -25,7 +25,7 @@ class MainContent(TabbedContent):
             self.last_log_size = len(content)
             widget.write(content)
         else:
-            new_content = content[self.last_log_size:]
+            new_content = content[self.last_log_size :]
             if new_content:
                 widget.write(new_content)
                 self.last_log_size = len(content)
