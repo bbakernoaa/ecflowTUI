@@ -1,2 +1,2 @@
 # ecflowTUI
-A Texual interface to ecflow 
+A Texual interface to ecflow
