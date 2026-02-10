@@ -1,10 +1,4 @@
-import sys
-from unittest.mock import MagicMock
-
-# Mock ecflow before importing the app
-sys.modules["ecflow"] = MagicMock()
-
-from ectop import Ectop  # noqa: E402
+from ectop import Ectop
 
 
 def test_app_instantiation():
