@@ -1,0 +1,130 @@
+from textual.app import ComposeResult
+from textual.binding import Binding
+from textual.containers import Horizontal, Vertical
+from textual.screen import ModalScreen
+from textual.widgets import Button, Static, Tree
+
+
+class WhyInspector(ModalScreen):
+    BINDINGS = [
+        Binding("escape", "close", "Close"),
+        Binding("w", "close", "Close"),
+    ]
+
+    def __init__(self, node_path, client):
+        super().__init__()
+        self.node_path = node_path
+        self.client = client
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="why_container"):
+            yield Static(f"Why is {self.node_path} not running?", id="why_title")
+            yield Tree("Dependencies", id="dep_tree")
+            with Horizontal(id="why_actions"):
+                yield Button("Close", variant="primary", id="close_btn")
+
+    def on_mount(self) -> None:
+        self.refresh_deps()
+
+    def action_close(self) -> None:
+        self.app.pop_screen()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "close_btn":
+            self.app.pop_screen()
+
+    def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
+        """Jump to the selected dependency node in the main tree."""
+        node_path = event.node.data
+        if node_path:
+            tree = self.app.query_one("#suite_tree", Tree)
+            # Find the node in the main tree
+            for n in tree.root.descendants:
+                if n.data == node_path:
+                    tree.select_node(n)
+                    # Expand parents
+                    p = n.parent
+                    while p:
+                        p.expand()
+                        p = p.parent
+                    tree.scroll_to_node(n)
+                    self.app.notify(f"Jumped to {node_path}")
+                    self.app.pop_screen()
+                    break
+
+    def refresh_deps(self):
+        tree = self.query_one("#dep_tree", Tree)
+        tree.clear()
+
+        try:
+            # We need to find the node in the defs
+            self.client.sync_local()
+            defs = self.client.get_defs()
+            node = defs.find_abs_node(self.node_path)
+
+            if not node:
+                tree.root.label = "Node not found"
+                return
+
+            # Triggers
+            trigger = node.get_trigger()
+            if trigger:
+                t_node = tree.root.add("Triggers")
+                self._parse_expression(t_node, trigger.get_expression(), defs)
+
+            # Complete
+            complete = node.get_complete()
+            if complete:
+                c_node = tree.root.add("Complete Expression")
+                self._parse_expression(c_node, complete.get_expression(), defs)
+
+            # Times, Dates, Crons
+            self._add_time_deps(tree.root, node)
+
+            tree.root.expand_all()
+
+        except Exception as e:
+            tree.root.label = f"Error: {e}"
+
+    def _parse_expression(self, parent_ui_node, expr_str, defs):
+        # Improved parser that handles basic and/or splitting
+        if " or " in expr_str:
+            parts = expr_str.split(" or ")
+            or_node = parent_ui_node.add("OR (Any must be true)", expand=True)
+            for part in parts:
+                self._parse_expression(or_node, part.strip().strip("()"), defs)
+            return
+
+        if " and " in expr_str:
+            parts = expr_str.split(" and ")
+            and_node = parent_ui_node.add("AND (All must be true)", expand=True)
+            for part in parts:
+                self._parse_expression(and_node, part.strip().strip("()"), defs)
+            return
+
+        # Leaf node (actual condition)
+        import re
+        # Match paths and optional state comparison
+        match = re.search(r'(/[a-zA-Z0-9_/]+)(\s*==\s*(\w+))?', expr_str)
+        if match:
+            path = match.group(1)
+            expected_state = match.group(3) or "complete"
+            target_node = defs.find_abs_node(path)
+            if target_node:
+                actual_state = str(target_node.get_state())
+                is_met = actual_state == expected_state
+                icon = "✅" if is_met else "❌"
+                parent_ui_node.add(f"{icon} {path} == {actual_state} (Expected: {expected_state})", data=path)
+            else:
+                parent_ui_node.add(f"❓ {path} (Not found)")
+        else:
+            parent_ui_node.add(f"📝 {expr_str}")
+
+    def _add_time_deps(self, parent_ui_node, node):
+        # Check for time, date, cron
+        for t in node.get_times():
+            parent_ui_node.add(f"⏳ Time: {t}")
+        for d in node.get_dates():
+            parent_ui_node.add(f"📅 Date: {d}")
+        for c in node.get_crons():
+            parent_ui_node.add(f"⏰ Cron: {c}")
