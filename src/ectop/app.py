@@ -1,3 +1,10 @@
+"""
+Main Application class for ectop.
+
+.. note::
+    If you modify features, API, or usage, you MUST update the documentation immediately.
+"""
+from textual import work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Horizontal
@@ -152,8 +159,14 @@ class Ectop(App):
         )
         yield Footer()
 
+    @work(exclusive=True, thread=True)
     def on_mount(self) -> None:
-        """Connect to ecFlow and load the initial tree."""
+        """
+        Connect to ecFlow and load the initial tree.
+
+        This method is run as a background worker to prevent blocking the UI
+        during the initial connection and synchronization.
+        """
         try:
             self.ecflow_client = EcflowClient(ECFLOW_HOST, ECFLOW_PORT)
             self.ecflow_client.ping()
@@ -162,26 +175,40 @@ class Ectop(App):
         except Exception as e:
             self.notify(f"Connection Failed: {e}", severity="error", timeout=10)
             tree = self.query_one("#suite_tree", SuiteTree)
-            tree.root.label = "[red]Connection Failed (Check Host/Port)[/]"
+            self.call_from_thread(setattr, tree.root, "label", "[red]Connection Failed (Check Host/Port)[/]")
 
+    @work(exclusive=True, thread=True)
     def action_refresh(self) -> None:
-        """Fetch suites from server and rebuild the tree."""
+        """
+        Fetch suites from server and rebuild the tree in a background thread.
+        """
         tree = self.query_one("#suite_tree", SuiteTree)
         try:
             self.ecflow_client.sync_local()
             defs = self.ecflow_client.get_defs()
-            tree.update_tree(self.ecflow_client.host, self.ecflow_client.port, defs)
+            # Update UI from thread
+            self.call_from_thread(tree.update_tree, self.ecflow_client.host, self.ecflow_client.port, defs)
             self.notify("Tree Refreshed")
         except Exception as e:
             self.notify(f"Refresh Error: {e}", severity="error")
 
-    def get_selected_path(self):
-        """Helper to get the ecFlow path of the selected node."""
+    def get_selected_path(self) -> str | None:
+        """
+        Helper to get the ecFlow path of the selected node.
+
+        Returns
+        -------
+        str | None
+            The absolute path of the selected node, or None if no node is selected.
+        """
         node = self.query_one("#suite_tree", SuiteTree).cursor_node
         return node.data if node else None
 
+    @work(exclusive=True, thread=True)
     def action_load_node(self) -> None:
-        """Fetch Output, Script, and Job files for the selected node."""
+        """
+        Fetch Output, Script, and Job files for the selected node in a background thread.
+        """
         path = self.get_selected_path()
         if not path:
             self.notify("No node selected", severity="warning")
@@ -193,26 +220,36 @@ class Ectop(App):
         # 1. Output Log
         try:
             content = self.ecflow_client.file(path, "jobout")
-            content_area.update_log(content)
+            self.call_from_thread(content_area.update_log, content)
         except Exception:
-            content_area.show_error("#log_output", "File type 'jobout' not found (Has the task run yet?)")
+            self.call_from_thread(content_area.show_error, "#log_output", "File type 'jobout' not found (Has the task run yet?)")
 
         # 2. Script
         try:
             content = self.ecflow_client.file(path, "script")
-            content_area.update_script(content)
+            self.call_from_thread(content_area.update_script, content)
         except Exception:
-            content_area.show_error("#view_script", "File type 'script' not available.")
+            self.call_from_thread(content_area.show_error, "#view_script", "File type 'script' not available.")
 
         # 3. Job
         try:
             content = self.ecflow_client.file(path, "job")
-            content_area.update_job(content)
+            self.call_from_thread(content_area.update_job, content)
         except Exception:
-            content_area.show_error("#view_job", "File type 'job' not available.")
+            self.call_from_thread(content_area.show_error, "#view_job", "File type 'job' not available.")
 
-    def _run_client_command(self, command_name, path):
-        """Generic helper to run ecflow commands."""
+    @work(exclusive=True, thread=True)
+    def _run_client_command(self, command_name: str, path: str | None) -> None:
+        """
+        Generic helper to run ecflow commands in a background thread.
+
+        Parameters
+        ----------
+        command_name : str
+            The name of the EcflowClient method to call.
+        path : str | None
+            The absolute path of the node to act upon.
+        """
         if not path:
             return
         try:
@@ -222,19 +259,24 @@ class Ectop(App):
         except Exception as e:
             self.notify(f"Error: {e}", severity="error")
 
-    def action_suspend(self):
+    def action_suspend(self) -> None:
+        """Suspend the selected node."""
         self._run_client_command("suspend", self.get_selected_path())
 
-    def action_resume(self):
+    def action_resume(self) -> None:
+        """Resume the selected node."""
         self._run_client_command("resume", self.get_selected_path())
 
-    def action_kill(self):
+    def action_kill(self) -> None:
+        """Kill the selected node."""
         self._run_client_command("kill", self.get_selected_path())
 
-    def action_force(self):
+    def action_force(self) -> None:
+        """Force complete the selected node."""
         self._run_client_command("force_complete", self.get_selected_path())
 
-    def action_toggle_live(self):
+    def action_toggle_live(self) -> None:
+        """Toggle live log updating."""
         content_area = self.query_one("#main_content", MainContent)
         content_area.is_live = not content_area.is_live
         state = "ON" if content_area.is_live else "OFF"
@@ -242,7 +284,9 @@ class Ectop(App):
         if content_area.is_live:
             content_area.active = "tab_output"
 
+    @work(exclusive=True, thread=True)
     def _live_log_tick(self):
+        """Periodic tick to update live logs if enabled."""
         content_area = self.query_one("#main_content", MainContent)
         if content_area.is_live and content_area.active == "tab_output":
             path = self.get_selected_path()
@@ -251,25 +295,29 @@ class Ectop(App):
                     # In a real app we might want to fetch only the end,
                     # but for now we'll follow the requirement to fetch and compare length
                     content = self.ecflow_client.file(path, "jobout")
-                    content_area.update_log(content, append=True)
+                    self.call_from_thread(content_area.update_log, content, append=True)
                 except Exception:
                     pass
 
-    def action_why(self):
+    def action_why(self) -> None:
+        """Inspect why the selected node is in its current state."""
         path = self.get_selected_path()
         if not path:
             self.notify("No node selected", severity="warning")
             return
         self.push_screen(WhyInspector(path, self.ecflow_client))
 
-    def action_variables(self):
+    def action_variables(self) -> None:
+        """View and edit variables for the selected node."""
         path = self.get_selected_path()
         if not path:
             self.notify("No node selected", severity="warning")
             return
         self.push_screen(VariableTweaker(path, self.ecflow_client))
 
+    @work(exclusive=True, thread=True)
     def action_edit_script(self):
+        """Fetch, edit, and update a script in a background thread with TUI suspension."""
         path = self.get_selected_path()
         if not path:
             self.notify("No node selected", severity="warning")
@@ -287,6 +335,9 @@ class Ectop(App):
 
             editor = os.environ.get("EDITOR", "vi")
 
+            # suspend must be called from the main thread if possible,
+            # but in Textual it's often okay to call from a worker that handles the subprocess.
+            # However, self.suspend() specifically needs to stop the event loop.
             with self.suspend():
                 subprocess.run([editor, temp_path])
 
@@ -299,27 +350,43 @@ class Ectop(App):
                 self.ecflow_client.alter(path, "change", "script", new_content)
                 self.notify("Script updated on server")
                 # Prompt for re-queue
-                self._prompt_requeue(path)
+                self.call_from_thread(self._prompt_requeue, path)
             else:
                 self.notify("No changes detected")
 
         except Exception as e:
             self.notify(f"Edit Error: {e}", severity="error")
 
-    def _prompt_requeue(self, path):
-        # Using a simple notification with a callback might be hard in current Textual
-        # I'll create a simple modal for this
+    def _prompt_requeue(self, path: str) -> None:
+        """
+        Prompt the user to re-queue a node.
+
+        Parameters
+        ----------
+        path : str
+            The absolute path of the node to re-queue.
+        """
         from ectop.widgets.modals.confirm import ConfirmModal
-        self.push_screen(ConfirmModal(f"Re-queue {path} now?", lambda: self.ecflow_client.requeue(path)))
+        # _run_client_command is a worker, so it's safe to call from the callback
+        self.push_screen(ConfirmModal(f"Re-queue {path} now?", lambda: self._run_client_command("requeue", path)))
 
     def action_search(self) -> None:
-        """Show the search box."""
+        """
+        Show the search box and focus it.
+        """
         search_box = self.query_one("#search_box", SearchBox)
         search_box.add_class("visible")
         search_box.focus()
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
-        """Handle search submission."""
+        """
+        Handle search submission.
+
+        Parameters
+        ----------
+        event : Input.Submitted
+            The event representing the input submission.
+        """
         if event.input.id == "search_box":
             query = event.value
             if query:
@@ -331,7 +398,14 @@ class Ectop(App):
                     self.notify(f"No match found for '{query}'", severity="warning")
 
     def on_input_changed(self, event: Input.Changed) -> None:
-        """Optional: live search as typing? The requirement says 'As they type'."""
+        """
+        Handle live search as the user types.
+
+        Parameters
+        ----------
+        event : Input.Changed
+            The event representing the input change.
+        """
         if event.input.id == "search_box":
             query = event.value
             if query:
