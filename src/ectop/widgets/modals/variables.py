@@ -6,7 +6,6 @@ Modal screen for viewing and editing ecFlow variables.
     If you modify features, API, or usage, you MUST update the documentation immediately.
 """
 
-
 from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -90,7 +89,14 @@ class VariableTweaker(ModalScreen[None]):
 
     @work(thread=True)
     def refresh_vars(self) -> None:
-        """Fetch variables from the server and refresh the table."""
+        """
+        Fetch variables from the server and refresh the table.
+
+        Raises
+        ------
+        RuntimeError
+            If server synchronization fails.
+        """
         try:
             self.client.sync_local()
             defs = self.client.get_defs()
