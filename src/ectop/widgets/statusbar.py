@@ -8,7 +8,6 @@ Status bar widget for ectop.
 from datetime import datetime
 
 from rich.text import Text
-from textual.app import ComposeResult
 from textual.widgets import Static
 
 
