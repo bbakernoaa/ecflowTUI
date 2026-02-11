@@ -1,6 +1,8 @@
-from unittest.mock import MagicMock, patch
 import os
+from unittest.mock import MagicMock, patch
+
 from ectop.cli import main
+
 
 def test_cli_args():
     """Test that CLI arguments are correctly passed to the App."""
