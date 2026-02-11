@@ -33,7 +33,7 @@ def create_tutorial_suite():
         task.add_variable("ITERATION", str(i))
         # Add a dummy trigger for the second and third task to run sequentially
         if i > 1:
-            task.add_trigger(f"model_{i-1} == complete")
+            task.add_trigger(f"model_{i - 1} == complete")
 
     # Family 3: Reporting
     report = suite.add_family("report")

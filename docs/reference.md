@@ -13,6 +13,7 @@ This section contains the automatically generated API documentation for `ectop`.
 ::: ectop.widgets.content
 ::: ectop.widgets.search
 ::: ectop.widgets.sidebar
+::: ectop.widgets.statusbar
 
 ## Modals
 
