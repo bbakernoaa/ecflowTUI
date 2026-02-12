@@ -16,7 +16,7 @@ import os
 import ecflow
 
 
-def create_demo_suite(home: str) -> ecflow.Defs:
+def create_demo_suite(home: str, host: str = "localhost", port: int = 3141) -> ecflow.Defs:
     """
     Create a comprehensive ecFlow suite definition.
 
@@ -24,6 +24,10 @@ def create_demo_suite(home: str) -> ecflow.Defs:
     ----------
     home : str
         The ECF_HOME directory where scripts and logs will be stored.
+    host : str, optional
+        The ecFlow server host, by default "localhost".
+    port : int, optional
+        The ecFlow server port, by default 3141.
 
     Returns
     -------
@@ -41,8 +45,10 @@ def create_demo_suite(home: str) -> ecflow.Defs:
     # Global suite variables
     suite.add_variable("ECF_HOME", home)
     suite.add_variable("ECF_INCLUDE", home)
+    suite.add_variable("ECF_HOST", host)
+    suite.add_variable("ECF_PORT", port)
     # Use a simple job command that runs bash on the generated job file
-    suite.add_variable("ECF_JOB_CMD", "%ECF_JOB% > %ECF_JOBOUT% 2>&1")
+    suite.add_variable("ECF_JOB_CMD", "bash %ECF_JOB% > %ECF_JOBOUT% 2>&1")
     suite.add_variable("PROJECT", "ectop_testing")
     suite.add_variable("USER_NAME", os.environ.get("USER", "tester"))
 
@@ -237,7 +243,7 @@ def main() -> None:
     if not os.path.exists(home):
         os.makedirs(home)
 
-    defs = create_demo_suite(home)
+    defs = create_demo_suite(home, host=args.host, port=args.port)
     generate_scripts(defs, home)
 
     print("\nSuite Definition created.")
