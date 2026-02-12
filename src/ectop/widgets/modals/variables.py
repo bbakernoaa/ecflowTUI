@@ -41,6 +41,10 @@ class VariableTweaker(ModalScreen[None]):
             The absolute path to the ecFlow node.
         client : EcflowClient
             The ecFlow client instance.
+
+        Returns
+        -------
+        None
         """
         super().__init__()
         self.node_path: str = node_path
@@ -95,6 +99,10 @@ class VariableTweaker(ModalScreen[None]):
         ----------
         event : Button.Pressed
             The button press event.
+
+        Returns
+        -------
+        None
         """
         if event.button.id == "close_btn":
             self.app.pop_screen()
@@ -102,7 +110,21 @@ class VariableTweaker(ModalScreen[None]):
     @work(thread=True)
     def refresh_vars(self) -> None:
         """
-        Fetch variables from the server and refresh the table.
+        Fetch variables from the server and refresh the table in a background worker.
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        This is a background worker that performs blocking I/O.
+        """
+        self._refresh_vars_logic()
+
+    def _refresh_vars_logic(self) -> None:
+        """
+        The actual logic for fetching variables and updating the UI.
 
         Returns
         -------
@@ -115,7 +137,7 @@ class VariableTweaker(ModalScreen[None]):
 
         Notes
         -----
-        This method runs in a background thread and updates the UI via `call_from_thread`.
+        This method can be called directly for testing.
         """
         try:
             self.client.sync_local()
@@ -164,6 +186,10 @@ class VariableTweaker(ModalScreen[None]):
         ----------
         rows : list[tuple[str, str, str, str]]
             The rows to add to the table.
+
+        Returns
+        -------
+        None
         """
         table = self.query_one("#var_table", DataTable)
         table.clear()
@@ -178,6 +204,10 @@ class VariableTweaker(ModalScreen[None]):
         ----------
         event : DataTable.RowSelected
             The row selection event.
+
+        Returns
+        -------
+        None
         """
         row_key = event.row_key.value
         if row_key and row_key.startswith("inh_"):
@@ -197,6 +227,10 @@ class VariableTweaker(ModalScreen[None]):
         ----------
         event : Input.Submitted
             The input submission event.
+
+        Returns
+        -------
+        None
         """
         if event.input.id == "var_input":
             self._submit_variable_worker(event.value)
@@ -204,7 +238,26 @@ class VariableTweaker(ModalScreen[None]):
     @work(thread=True)
     def _submit_variable_worker(self, value: str) -> None:
         """
-        Worker to submit a new or updated variable.
+        Worker to submit a new or updated variable in a background thread.
+
+        Parameters
+        ----------
+        value : str
+            The new value or 'name=value' string.
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        This is a background worker that performs blocking I/O.
+        """
+        self._submit_variable_logic(value)
+
+    def _submit_variable_logic(self, value: str) -> None:
+        """
+        The actual logic for submitting a variable update or addition.
 
         Parameters
         ----------
@@ -222,7 +275,7 @@ class VariableTweaker(ModalScreen[None]):
 
         Notes
         -----
-        This is a background worker that performs blocking I/O.
+        This method can be called directly for testing.
         """
         try:
             if self.selected_var_name:
@@ -292,7 +345,26 @@ class VariableTweaker(ModalScreen[None]):
     @work(thread=True)
     def _delete_variable_worker(self, row_key: str) -> None:
         """
-        Worker to delete a variable from the server.
+        Worker to delete a variable from the server in a background thread.
+
+        Parameters
+        ----------
+        row_key : str
+            The name (or key) of the variable to delete.
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        This is a background worker that performs blocking I/O.
+        """
+        self._delete_variable_logic(row_key)
+
+    def _delete_variable_logic(self, row_key: str) -> None:
+        """
+        The actual logic for deleting a variable.
 
         Parameters
         ----------
@@ -310,7 +382,7 @@ class VariableTweaker(ModalScreen[None]):
 
         Notes
         -----
-        This is a background worker that performs blocking I/O.
+        This method can be called directly for testing.
         """
         if row_key.startswith("inh_"):
             self.call_from_thread(self.app.notify, "Cannot delete inherited variables", severity="error")

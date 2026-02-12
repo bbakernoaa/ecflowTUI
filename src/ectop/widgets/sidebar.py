@@ -38,6 +38,10 @@ class SuiteTree(Tree[str]):
             Positional arguments for the Tree widget.
         **kwargs : Any
             Keyword arguments for the Tree widget.
+
+        Returns
+        -------
+        None
         """
         super().__init__(*args, **kwargs)
         self.defs: Defs | None = None
@@ -185,6 +189,10 @@ class SuiteTree(Tree[str]):
             The UI node to populate.
         node_path : str
             The absolute path of the ecFlow node.
+
+        Returns
+        -------
+        None
 
         Notes
         -----

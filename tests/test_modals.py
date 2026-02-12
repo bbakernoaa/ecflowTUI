@@ -6,7 +6,7 @@ Tests for Modal widgets (VariableTweaker, WhyInspector).
     If you modify features, API, or usage, you MUST update the documentation immediately.
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 
@@ -112,20 +112,18 @@ def test_variable_tweaker_workers(mock_client: MagicMock) -> None:
         The mock EcflowClient.
     """
     tweaker = VariableTweaker("/node", mock_client)
-    tweaker.call_from_thread = lambda f, *args, **kwargs: f(*args, **kwargs)
-    with patch.object(VariableTweaker, "app", new=MagicMock()):
-        # Test delete worker
-        tweaker._delete_variable_worker("VAR1")
-        mock_client.alter.assert_called_with("/node", "delete_variable", "VAR1")
+    tweaker.call_from_thread = MagicMock(side_effect=lambda f, *args, **kwargs: f(*args, **kwargs))
+    with patch.object(VariableTweaker, "app", new=PropertyMock(return_value=MagicMock())), patch.object(tweaker, "refresh_vars"):
+        # Call the logic methods directly for testing
+        tweaker._delete_variable_logic("VAR1")
+        mock_client.alter.assert_any_call("/node", "delete_variable", "VAR1")
 
-        # Test submit worker (add)
-        tweaker._submit_variable_worker("NEWVAR=NEWVAL")
-        mock_client.alter.assert_called_with("/node", "add_variable", "NEWVAR", "NEWVAL")
+        tweaker._submit_variable_logic("NEWVAR=NEWVAL")
+        mock_client.alter.assert_any_call("/node", "add_variable", "NEWVAR", "NEWVAL")
 
-        # Test submit worker (update)
         tweaker.selected_var_name = "EXISTING"
-        tweaker._submit_variable_worker("UPDATED")
-        mock_client.alter.assert_called_with("/node", "add_variable", "EXISTING", "UPDATED")
+        tweaker._submit_variable_logic("UPDATED")
+        mock_client.alter.assert_any_call("/node", "add_variable", "EXISTING", "UPDATED")
 
 
 def test_why_inspector_worker(mock_client: MagicMock) -> None:
@@ -138,10 +136,10 @@ def test_why_inspector_worker(mock_client: MagicMock) -> None:
         The mock EcflowClient.
     """
     inspector = WhyInspector("/node", mock_client)
-    inspector.call_from_thread = lambda f, *args, **kwargs: f(*args, **kwargs)
+    inspector.call_from_thread = MagicMock(side_effect=lambda f, *args, **kwargs: f(*args, **kwargs))
     tree = MagicMock()
 
     with patch.object(WhyInspector, "_populate_dep_tree"):
-        inspector._refresh_deps_worker(tree)
+        inspector._refresh_deps_logic(tree)
         mock_client.sync_local.assert_called_once()
         mock_client.get_defs.assert_called_once()
