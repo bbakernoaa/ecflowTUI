@@ -9,6 +9,7 @@ Modal screen for inspecting why an ecFlow node is not running.
     If you modify features, API, or usage, you MUST update the documentation immediately.
 """
 
+from __future__ import annotations
 import re
 from typing import TYPE_CHECKING
 

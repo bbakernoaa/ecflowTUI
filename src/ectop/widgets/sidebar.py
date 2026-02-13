@@ -9,6 +9,7 @@ Sidebar widget for the ecFlow suite tree.
     If you modify features, API, or usage, you MUST update the documentation immediately.
 """
 
+from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import ecflow
@@ -106,7 +107,7 @@ class SuiteTree(Tree[str]):
         state = str(ecflow_node.get_state())
         icon = STATE_MAP.get(state, "⚪")
 
-        is_container = isinstance(ecflow_node, ecflow.Family | ecflow.Suite)
+        is_container = isinstance(ecflow_node, (ecflow.Family, ecflow.Suite))
         type_icon = ICON_FAMILY if is_container else ICON_TASK
 
         label = Text(f"{icon} {type_icon} {ecflow_node.name()} ")

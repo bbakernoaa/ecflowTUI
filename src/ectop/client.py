@@ -1,4 +1,7 @@
-# .. note:: warning: "If you modify features, API, or usage, you MUST update the documentation immediately."
+# #############################################################################
+# WARNING: If you modify features, API, or usage, you MUST update the
+# documentation immediately.
+# #############################################################################
 """
 ecFlow Client Wrapper for ectop.
 
@@ -6,6 +9,7 @@ ecFlow Client Wrapper for ectop.
     If you modify features, API, or usage, you MUST update the documentation immediately.
 """
 
+from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import ecflow
