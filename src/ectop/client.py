@@ -10,6 +10,7 @@ ecFlow Client Wrapper for ectop.
 """
 
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 import ecflow
@@ -102,7 +103,7 @@ class EcflowClient:
         except RuntimeError as e:
             raise RuntimeError(f"Failed to sync with ecFlow server: {e}") from e
 
-    def get_defs(self) -> "Defs | None":
+    def get_defs(self) -> Defs | None:
         """
         Retrieve the current definitions from the client.
 

@@ -10,6 +10,7 @@ Modal screen for inspecting why an ecFlow node is not running.
 """
 
 from __future__ import annotations
+
 import re
 from typing import TYPE_CHECKING
 
@@ -238,7 +239,7 @@ class WhyInspector(ModalScreen[None]):
         """
         tree.root.label = label
 
-    def _populate_dep_tree(self, tree: Tree, node: "Node", defs: "Defs") -> None:
+    def _populate_dep_tree(self, tree: Tree, node: Node, defs: Defs) -> None:
         """
         Populate the dependency tree UI.
 
@@ -285,7 +286,7 @@ class WhyInspector(ModalScreen[None]):
 
         tree.root.expand_all()
 
-    def _add_limit_deps(self, parent_ui_node: TreeNode[str], node: "Node") -> None:
+    def _add_limit_deps(self, parent_ui_node: TreeNode[str], node: Node) -> None:
         """
         Add limit-based dependencies to the UI tree.
 
@@ -306,7 +307,7 @@ class WhyInspector(ModalScreen[None]):
             for il in inlimits:
                 limit_node.add(f"🔒 Limit: {il.name()} (Path: {il.value()})")
 
-    def _parse_expression(self, parent_ui_node: TreeNode[str], expr_str: str, defs: "Defs") -> None:
+    def _parse_expression(self, parent_ui_node: TreeNode[str], expr_str: str, defs: Defs) -> None:
         """
         Parse an ecFlow expression and add it to the UI tree.
 
@@ -354,7 +355,7 @@ class WhyInspector(ModalScreen[None]):
         else:
             parent_ui_node.add(f"{ICON_NOTE} {expr_str}")
 
-    def _add_time_deps(self, parent_ui_node: TreeNode[str], node: "Node") -> None:
+    def _add_time_deps(self, parent_ui_node: TreeNode[str], node: Node) -> None:
         """
         Add time-based dependencies to the UI tree.
 

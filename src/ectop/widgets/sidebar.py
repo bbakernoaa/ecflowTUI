@@ -10,6 +10,7 @@ Sidebar widget for the ecFlow suite tree.
 """
 
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 import ecflow
@@ -56,7 +57,7 @@ class SuiteTree(Tree[str]):
         super().__init__(*args, **kwargs)
         self.defs: Defs | None = None
 
-    def update_tree(self, client_host: str, client_port: int, defs: "Defs | None") -> None:
+    def update_tree(self, client_host: str, client_port: int, defs: Defs | None) -> None:
         """
         Rebuild the tree from ecFlow definitions using lazy loading.
 
@@ -88,7 +89,7 @@ class SuiteTree(Tree[str]):
         for suite in defs.suites:
             self._add_node_to_ui(self.root, suite)
 
-    def _add_node_to_ui(self, parent_ui_node: TreeNode[str], ecflow_node: "Node") -> TreeNode[str]:
+    def _add_node_to_ui(self, parent_ui_node: TreeNode[str], ecflow_node: Node) -> TreeNode[str]:
         """
         Add a single ecflow node to the UI tree.
 

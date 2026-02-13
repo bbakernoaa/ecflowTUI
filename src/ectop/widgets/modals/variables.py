@@ -10,6 +10,7 @@ Modal screen for viewing and editing ecFlow variables.
 """
 
 from __future__ import annotations
+
 from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
