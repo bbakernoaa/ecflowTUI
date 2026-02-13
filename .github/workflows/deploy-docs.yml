@@ -21,7 +21,7 @@ jobs:
           miniforge-version: latest
           activate-environment: ectop
           environment-file: environment.yml
-          python-version: "3.11"
+          python-version: "3.9"
           use-mamba: true
 
       - name: Install documentation dependencies and Build

@@ -1,10 +1,15 @@
-# .. note:: warning: "If you modify features, API, or usage, you MUST update the documentation immediately."
+# #############################################################################
+# WARNING: If you modify features, API, or usage, you MUST update the
+# documentation immediately.
+# #############################################################################
 """
 ecFlow Client Wrapper for ectop.
 
 .. note::
     If you modify features, API, or usage, you MUST update the documentation immediately.
 """
+
+from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
@@ -98,7 +103,7 @@ class EcflowClient:
         except RuntimeError as e:
             raise RuntimeError(f"Failed to sync with ecFlow server: {e}") from e
 
-    def get_defs(self) -> "Defs | None":
+    def get_defs(self) -> Defs | None:
         """
         Retrieve the current definitions from the client.
 

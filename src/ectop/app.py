@@ -9,6 +9,8 @@ Main application class for ectop.
     If you modify features, API, or usage, you MUST update the documentation immediately.
 """
 
+from __future__ import annotations
+
 import os
 import subprocess
 import tempfile
