@@ -144,9 +144,9 @@ class SuiteTree(Tree[str]):
 
         paths: list[str] = []
         for suite in self.defs.suites:
-            paths.append(suite.abs_node_path())
+            paths.append(suite.get_abs_node_path())
             for node in suite.get_all_nodes():
-                paths.append(node.abs_node_path())
+                paths.append(node.get_abs_node_path())
 
         self._all_paths_cache = paths
 
@@ -212,7 +212,7 @@ class SuiteTree(Tree[str]):
 
         new_ui_node = parent_ui_node.add(
             label,
-            data=ecflow_node.abs_node_path(),
+            data=ecflow_node.get_abs_node_path(),
             expand=False,
         )
 
@@ -348,9 +348,9 @@ class SuiteTree(Tree[str]):
             # Fallback if cache isn't ready yet (e.g. searching immediately after sync)
             paths: list[str] = []
             for suite in self.defs.suites:
-                paths.append(suite.abs_node_path())
+                paths.append(suite.get_abs_node_path())
                 for node in suite.get_all_nodes():
-                    paths.append(node.abs_node_path())
+                    paths.append(node.get_abs_node_path())
             self._all_paths_cache = paths
 
         all_paths = self._all_paths_cache

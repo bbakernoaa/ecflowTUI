@@ -37,7 +37,7 @@ async def test_search_cache_background_building():
         # Create a mock that definitely has the methods and passes isinstance
         mock_suite = mock.MagicMock(spec=ecflow.Suite)
         # Manually add methods if spec failed to pick them up for some reason
-        mock_suite.abs_node_path = mock.MagicMock(return_value="/suite")
+        mock_suite.get_abs_node_path = mock.MagicMock(return_value="/suite")
         mock_suite.name = mock.MagicMock(return_value="suite")
         mock_suite.get_all_nodes = mock.MagicMock(return_value=[])
         mock_suite.get_state = mock.MagicMock(return_value="unknown")
@@ -70,7 +70,7 @@ async def test_find_and_select_fallback():
 
         mock_defs = mock.MagicMock()
         mock_suite = mock.MagicMock(spec=ecflow.Suite)
-        mock_suite.abs_node_path = mock.MagicMock(return_value="/suite")
+        mock_suite.get_abs_node_path = mock.MagicMock(return_value="/suite")
         mock_suite.name = mock.MagicMock(return_value="suite")
         mock_suite.get_all_nodes = mock.MagicMock(return_value=[])
         mock_suite.get_state = mock.MagicMock(return_value="unknown")

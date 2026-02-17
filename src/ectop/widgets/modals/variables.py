@@ -158,7 +158,7 @@ class VariableTweaker(ModalScreen[None]):
             node = defs.find_abs_node(self.node_path)
 
             if not node:
-                self.call_from_thread(self.app.notify, "Node not found", severity="error")
+                self.app.call_from_thread(self.app.notify, "Node not found", severity="error")
                 return
 
             rows: list[tuple[str, str, str, str]] = []
@@ -170,12 +170,12 @@ class VariableTweaker(ModalScreen[None]):
                 seen_vars.add(var.name())
 
             # Generated variables
-            for var in node.generated_variables:
+            for var in node.get_generated_variables():
                 rows.append((var.name(), var.value(), VAR_TYPE_GENERATED, var.name()))
                 seen_vars.add(var.name())
 
             # Inherited variables (climb up the tree)
-            parent = node.parent
+            parent = node.get_parent()
             while parent:
                 for var in parent.variables:
                     # Only add if not already present (overridden)
@@ -189,14 +189,14 @@ class VariableTweaker(ModalScreen[None]):
                             )
                         )
                         seen_vars.add(var.name())
-                parent = parent.parent
+                parent = parent.get_parent()
 
-            self.call_from_thread(self._update_table, rows)
+            self.app.call_from_thread(self._update_table, rows)
 
         except RuntimeError as e:
-            self.call_from_thread(self.app.notify, f"Error fetching variables: {e}", severity="error")
+            self.app.call_from_thread(self.app.notify, f"Error fetching variables: {e}", severity="error")
         except Exception as e:
-            self.call_from_thread(self.app.notify, f"Unexpected Error: {e}", severity="error")
+            self.app.call_from_thread(self.app.notify, f"Unexpected Error: {e}", severity="error")
 
     def _update_table(self, rows: list[tuple[str, str, str, str]]) -> None:
         """
@@ -301,23 +301,23 @@ class VariableTweaker(ModalScreen[None]):
             if self.selected_var_name:
                 # Editing existing
                 self.client.alter(self.node_path, "add_variable", self.selected_var_name, value)
-                self.call_from_thread(self.app.notify, f"Updated {self.selected_var_name}")
+                self.app.call_from_thread(self.app.notify, f"Updated {self.selected_var_name}")
             else:
                 # Adding new (expecting name=value)
                 if "=" in value:
                     name, val = value.split("=", 1)
                     self.client.alter(self.node_path, "add_variable", name.strip(), val.strip())
-                    self.call_from_thread(self.app.notify, f"Added {name.strip()}")
+                    self.app.call_from_thread(self.app.notify, f"Added {name.strip()}")
                 else:
-                    self.call_from_thread(self.app.notify, "Use name=value format to add", severity="warning")
+                    self.app.call_from_thread(self.app.notify, "Use name=value format to add", severity="warning")
                     return
 
-            self.call_from_thread(self._reset_input)
+            self.app.call_from_thread(self._reset_input)
             self.refresh_vars()
         except RuntimeError as e:
-            self.call_from_thread(self.app.notify, f"Error: {e}", severity="error")
+            self.app.call_from_thread(self.app.notify, f"Error: {e}", severity="error")
         except Exception as e:
-            self.call_from_thread(self.app.notify, f"Unexpected Error: {e}", severity="error")
+            self.app.call_from_thread(self.app.notify, f"Unexpected Error: {e}", severity="error")
 
     def _reset_input(self) -> None:
         """
@@ -407,14 +407,14 @@ class VariableTweaker(ModalScreen[None]):
         This method can be called directly for testing.
         """
         if row_key.startswith(INHERITED_VAR_PREFIX):
-            self.call_from_thread(self.app.notify, "Cannot delete inherited variables", severity="error")
+            self.app.call_from_thread(self.app.notify, "Cannot delete inherited variables", severity="error")
             return
 
         try:
             self.client.alter(self.node_path, "delete_variable", row_key)
-            self.call_from_thread(self.app.notify, f"Deleted {row_key}")
+            self.app.call_from_thread(self.app.notify, f"Deleted {row_key}")
             self.refresh_vars()
         except RuntimeError as e:
-            self.call_from_thread(self.app.notify, f"Error: {e}", severity="error")
+            self.app.call_from_thread(self.app.notify, f"Error: {e}", severity="error")
         except Exception as e:
-            self.call_from_thread(self.app.notify, f"Unexpected Error: {e}", severity="error")
+            self.app.call_from_thread(self.app.notify, f"Unexpected Error: {e}", severity="error")

@@ -27,18 +27,18 @@ def mock_defs() -> MagicMock:
     defs = MagicMock()
     suite1 = MagicMock()
     suite1.name.return_value = "s1"
-    suite1.abs_node_path.return_value = "/s1"
+    suite1.get_get_abs_node_path.return_value = "/s1"
     suite1.get_state.return_value = "complete"
     suite1.nodes = []
 
     suite2 = MagicMock()
     suite2.name.return_value = "s2"
-    suite2.abs_node_path.return_value = "/s2"
+    suite2.get_get_abs_node_path.return_value = "/s2"
     suite2.get_state.return_value = "active"
 
     task2a = MagicMock()
     task2a.name.return_value = "t2a"
-    task2a.abs_node_path.return_value = "/s2/t2a"
+    task2a.get_get_abs_node_path.return_value = "/s2/t2a"
     task2a.get_state.return_value = "queued"
     task2a.nodes = []
 

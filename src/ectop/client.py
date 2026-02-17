@@ -144,7 +144,7 @@ class EcflowClient:
             If the file cannot be retrieved.
         """
         try:
-            return self.client.file(path, file_type)
+            return self.client.get_file(path, file_type)
         except RuntimeError as e:
             raise RuntimeError(f"Failed to retrieve {file_type} for {path}: {e}") from e
 
@@ -267,3 +267,31 @@ class EcflowClient:
             self.client.requeue(path)
         except RuntimeError as e:
             raise RuntimeError(f"Failed to requeue {path}: {e}") from e
+
+    def restart_server(self) -> None:
+        """
+        Restart the ecFlow server (resume from HALTED state).
+
+        Raises
+        ------
+        RuntimeError
+            If the server cannot be restarted.
+        """
+        try:
+            self.client.restart_server()
+        except RuntimeError as e:
+            raise RuntimeError(f"Failed to restart server: {e}") from e
+
+    def halt_server(self) -> None:
+        """
+        Halt the ecFlow server (suspend scheduling).
+
+        Raises
+        ------
+        RuntimeError
+            If the server cannot be halted.
+        """
+        try:
+            self.client.halt_server()
+        except RuntimeError as e:
+            raise RuntimeError(f"Failed to halt server: {e}") from e

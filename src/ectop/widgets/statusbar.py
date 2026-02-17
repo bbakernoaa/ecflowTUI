@@ -73,11 +73,19 @@ class StatusBar(Static):
         Text
             The rendered status bar content.
         """
+        status_color = "red"
+        if self.status == "RUNNING":
+            status_color = "green"
+        elif self.status == "HALTED":
+            status_color = "orange"
+        elif "Connected" in self.status:
+            status_color = "green"
+
         return Text.assemble(
             (" Server: ", "bold"),
             (self.server_info, "cyan"),
             (" | Status: ", "bold"),
-            (self.status, "green" if "Connected" in self.status else "red"),
+            (self.status, status_color),
             (" | Last Sync: ", "bold"),
             (self.last_sync, "yellow"),
         )

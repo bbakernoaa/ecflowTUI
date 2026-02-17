@@ -34,9 +34,9 @@ class Node:
     def is_suspended(self) -> bool:
         return False
 
-    def abs_node_path(self) -> str:
+    def get_abs_node_path(self) -> str:
         if self._parent:
-            return f"{self._parent.abs_node_path()}/{self._name}"
+            return f"{self._parent.get_abs_node_path()}/{self._name}"
         return f"/{self._name}"
 
 
@@ -61,7 +61,7 @@ class Family(Node):
 
 
 class Suite(Family):
-    def abs_node_path(self) -> str:
+    def get_abs_node_path(self) -> str:
         return f"/{self._name}"
 
     def get_all_nodes(self) -> list[Node]:

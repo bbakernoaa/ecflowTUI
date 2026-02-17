@@ -76,11 +76,11 @@ def test_search_logic() -> None:
         mock_cursor.return_value = None
         # Mocking the definition walk
         suite = MagicMock()
-        suite.abs_node_path.return_value = "/suite"
+        suite.get_abs_node_path.return_value = "/suite"
         node1_ecf = MagicMock()
-        node1_ecf.abs_node_path.return_value = "/suite/task1"
+        node1_ecf.get_abs_node_path.return_value = "/suite/task1"
         node2_ecf = MagicMock()
-        node2_ecf.abs_node_path.return_value = "/suite/post_proc"
+        node2_ecf.get_abs_node_path.return_value = "/suite/post_proc"
         suite.get_all_nodes.return_value = [node1_ecf, node2_ecf]
         tree.defs.suites = [suite]
 

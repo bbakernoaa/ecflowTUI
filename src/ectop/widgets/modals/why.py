@@ -201,28 +201,28 @@ class WhyInspector(ModalScreen[None]):
         -----
         This method can be called directly for testing.
         """
-        self.call_from_thread(tree.clear)
+        self.app.call_from_thread(tree.clear)
 
         try:
             self.client.sync_local()
             defs = self.client.get_defs()
             if not defs:
-                self.call_from_thread(self._update_tree_root, tree, "Server Empty")
+                self.app.call_from_thread(self._update_tree_root, tree, "Server Empty")
                 return
 
             node = defs.find_abs_node(self.node_path)
 
             if not node:
-                self.call_from_thread(self._update_tree_root, tree, "Node not found")
+                self.app.call_from_thread(self._update_tree_root, tree, "Node not found")
                 return
 
             # Populate the tree (UI operations must be on main thread)
-            self.call_from_thread(self._populate_dep_tree, tree, node, defs)
+            self.app.call_from_thread(self._populate_dep_tree, tree, node, defs)
 
         except RuntimeError as e:
-            self.call_from_thread(self._update_tree_root, tree, f"Error: {e}")
+            self.app.call_from_thread(self._update_tree_root, tree, f"Error: {e}")
         except Exception as e:
-            self.call_from_thread(self._update_tree_root, tree, f"Unexpected Error: {e}")
+            self.app.call_from_thread(self._update_tree_root, tree, f"Unexpected Error: {e}")
 
     def _update_tree_root(self, tree: Tree, label: str) -> None:
         """

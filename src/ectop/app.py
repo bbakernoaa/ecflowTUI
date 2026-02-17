@@ -21,7 +21,7 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.command import Hit, Hits, Provider
 from textual.containers import Container, Horizontal
-from textual.widgets import Footer, Header, Input
+from textual.widgets import Footer, Header, Input, Tree
 
 from ectop.client import EcflowClient
 from ectop.constants import (
@@ -81,6 +81,8 @@ class EctopCommands(Provider):
             ("Why?", app.action_why, "Inspect why a node is not running"),
             ("Variables", app.action_variables, "View/Edit node variables"),
             ("Edit Script", app.action_edit_script, "Edit and rerun node script"),
+            ("Restart Server", app.action_restart_server, "Start server scheduling (RUNNING)"),
+            ("Halt Server", app.action_halt_server, "Stop server scheduling (HALT)"),
             ("Toggle Live Log", app.action_toggle_live, "Toggle live log updates"),
             ("Quit", app.action_quit, "Quit the application"),
         ]
@@ -236,6 +238,8 @@ class Ectop(App):
         Binding("F", "cycle_filter", "Cycle Filter"),
         Binding("R", "requeue", "Requeue"),
         Binding("c", "copy_path", "Copy Path"),
+        Binding("S", "restart_server", "Start Server"),
+        Binding("H", "halt_server", "Halt Server"),
         Binding("/", "search", "Search"),
         Binding("w", "why", "Why?"),
         Binding("e", "edit_script", "Edit & Rerun"),
@@ -300,6 +304,18 @@ class Ectop(App):
         self._initial_connect()
         self.set_interval(self.refresh_interval, self._live_log_tick)
 
+    def on_tree_node_selected(self, event: SuiteTree.NodeSelected[str]) -> None:
+        """
+        Handle node selection to automatically load content.
+
+        Parameters
+        ----------
+        event : SuiteTree.NodeSelected[str]
+            The node selection event.
+        """
+        if event.node.data:
+            self.action_load_node()
+
     @work(thread=True)
     def _initial_connect(self) -> None:
         """
@@ -363,14 +379,46 @@ class Ectop(App):
         try:
             self.ecflow_client.sync_local()
             defs = self.ecflow_client.get_defs()
+            status = "Connected"
+            if defs:
+                status = str(defs.get_server_state())
+
             self.call_from_thread(tree.update_tree, self.ecflow_client.host, self.ecflow_client.port, defs)
-            self.call_from_thread(status_bar.update_status, self.ecflow_client.host, self.ecflow_client.port)
+            self.call_from_thread(status_bar.update_status, self.ecflow_client.host, self.ecflow_client.port, status=status)
             self.call_from_thread(self.notify, "Tree Refreshed")
         except RuntimeError as e:
             self.call_from_thread(status_bar.update_status, self.ecflow_client.host, self.ecflow_client.port, status="Sync Error")
             self.call_from_thread(self.notify, f"Refresh Error: {e}", severity="error")
         except Exception as e:
             self.call_from_thread(self.notify, f"Unexpected Error: {e}", severity="error")
+
+    @work(thread=True)
+    def action_restart_server(self) -> None:
+        """
+        Restart the ecFlow server (RUNNING).
+        """
+        if not self.ecflow_client:
+            return
+        try:
+            self.ecflow_client.restart_server()
+            self.call_from_thread(self.notify, "Server Started (RUNNING)")
+            self.action_refresh()
+        except Exception as e:
+            self.call_from_thread(self.notify, f"Restart Error: {e}", severity="error")
+
+    @work(thread=True)
+    def action_halt_server(self) -> None:
+        """
+        Halt the ecFlow server (HALT).
+        """
+        if not self.ecflow_client:
+            return
+        try:
+            self.ecflow_client.halt_server()
+            self.call_from_thread(self.notify, "Server Halted (HALT)")
+            self.action_refresh()
+        except Exception as e:
+            self.call_from_thread(self.notify, f"Halt Error: {e}", severity="error")
 
     def get_selected_path(self) -> str | None:
         """
@@ -397,6 +445,12 @@ class Ectop(App):
 
         self.call_from_thread(self.notify, f"Loading files for {path}...")
         content_area = self.query_one("#main_content", MainContent)
+
+        try:
+            # Sync to get latest try numbers for filenames
+            self.ecflow_client.sync_local()
+        except RuntimeError:
+            pass
 
         # 1. Output Log
         try:

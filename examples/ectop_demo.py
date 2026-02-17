@@ -157,6 +157,8 @@ def generate_scripts(defs: ecflow.Defs, home: str) -> None:
     Each script is made executable.
     """
     template = """#!/bin/bash
+set -e # Stop on error
+
 export ECF_PORT=%ECF_PORT%
 export ECF_HOST=%ECF_HOST%
 export ECF_NAME=%ECF_NAME%
@@ -164,11 +166,11 @@ export ECF_PASS=%ECF_PASS%
 export ECF_TRYNO=%ECF_TRYNO%
 export ECF_RID=$$
 
+# Trap errors to notify ecFlow
+trap 'ecflow_client --abort; exit 1' ERR EXIT
+
 # Notify ecFlow that the task has started
 ecflow_client --init=$$
-
-# Trap errors to notify ecFlow
-trap 'ecflow_client --abort; exit 1' ERR
 
 echo "------------------------------------------------"
 echo "Task: %ECF_NAME%"
@@ -182,6 +184,7 @@ SHOULD_FAIL=%SHOULD_FAIL:0%
 if [ "$SHOULD_FAIL" -eq 1 ]; then
     echo "ERROR: This task is configured to fail for demonstration purposes."
     sleep 2
+    ecflow_client --abort "Configured failure"
     exit 1
 fi
 
@@ -195,6 +198,7 @@ echo "------------------------------------------------"
 
 # Notify ecFlow that the task has completed
 ecflow_client --complete
+trap - ERR EXIT
 """
 
     # Iterate over all suites and tasks to create script files
@@ -255,8 +259,20 @@ def main() -> None:
             print(f"Connecting to ecFlow server at {args.host}:{args.port}...")
             client.ping()
 
-            print("Loading suite...")
+            print("Ensuring a clean state...")
+            try:
+                # Attempt to delete the suite if it already exists
+                client.delete("/ectop_demo", True)
+                print("  Removed existing 'ectop_demo' suite.")
+            except RuntimeError:
+                # Suite doesn't exist, which is fine
+                pass
+
+            print("Loading suite definition...")
             client.load(defs)
+
+            print("Restarting server to ensure it is in RUNNING state...")
+            client.restart_server()
 
             print("Beginning suite playback...")
             client.begin_suite("ectop_demo")

@@ -108,7 +108,7 @@ async def test_suite_tree_select_by_path_worker() -> None:
 
     # Mock node structure
     suite = MagicMock()
-    suite.abs_node_path.return_value = "/s1"
+    suite.get_abs_node_path.return_value = "/s1"
     suite.data = "/s1"
     suite.nodes = []
     tree.defs.suites = [suite]
