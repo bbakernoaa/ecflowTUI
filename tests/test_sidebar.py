@@ -1,4 +1,7 @@
-# .. note:: warning: "If you modify features, API, or usage, you MUST update the documentation immediately."
+# #############################################################################
+# WARNING: If you modify features, API, or usage, you MUST update the
+# documentation immediately.
+# #############################################################################
 """
 Tests for the Sidebar (SuiteTree) widget.
 
@@ -27,18 +30,18 @@ def mock_defs() -> MagicMock:
     defs = MagicMock()
     suite1 = MagicMock()
     suite1.name.return_value = "s1"
-    suite1.get_get_abs_node_path.return_value = "/s1"
+    suite1.get_abs_node_path.return_value = "/s1"
     suite1.get_state.return_value = "complete"
     suite1.nodes = []
 
     suite2 = MagicMock()
     suite2.name.return_value = "s2"
-    suite2.get_get_abs_node_path.return_value = "/s2"
+    suite2.get_abs_node_path.return_value = "/s2"
     suite2.get_state.return_value = "active"
 
     task2a = MagicMock()
     task2a.name.return_value = "t2a"
-    task2a.get_get_abs_node_path.return_value = "/s2/t2a"
+    task2a.get_abs_node_path.return_value = "/s2/t2a"
     task2a.get_state.return_value = "queued"
     task2a.nodes = []
 
@@ -59,6 +62,10 @@ def test_update_tree(mock_defs: MagicMock) -> None:
     ----------
     mock_defs : MagicMock
         The mock ecFlow definitions.
+
+    Returns
+    -------
+    None
     """
     tree = SuiteTree("Test")
     tree.clear = MagicMock()
@@ -81,6 +88,10 @@ def test_load_children(mock_defs: MagicMock) -> None:
     ----------
     mock_defs : MagicMock
         The mock ecFlow definitions.
+
+    Returns
+    -------
+    None
     """
     tree = SuiteTree("Test")
     tree.defs = mock_defs
@@ -109,6 +120,10 @@ def test_load_children_worker(mock_defs: MagicMock) -> None:
     ----------
     mock_defs : MagicMock
         The mock ecFlow definitions.
+
+    Returns
+    -------
+    None
     """
     tree = SuiteTree("Test")
     tree.defs = mock_defs
@@ -136,6 +151,10 @@ def test_select_by_path(mock_defs: MagicMock) -> None:
     ----------
     mock_defs : MagicMock
         The mock ecFlow definitions.
+
+    Returns
+    -------
+    None
     """
     tree = SuiteTree("Test")
     tree.defs = mock_defs
@@ -172,6 +191,10 @@ def test_find_and_select_caching(mock_defs: MagicMock) -> None:
     ----------
     mock_defs : MagicMock
         The mock ecFlow definitions.
+
+    Returns
+    -------
+    None
     """
     tree = SuiteTree("Test")
     tree.defs = mock_defs

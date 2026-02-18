@@ -63,3 +63,8 @@ COLOR_TEXT = "#a9b1d6"
 COLOR_TEXT_HIGHLIGHT = "#c0caf5"
 COLOR_STATUS_BAR_BG = "#16161e"
 COLOR_HEADER_BG = "#565f89"
+
+# --- Syntax Highlighting and Editor ---
+SYNTAX_THEME = "monokai"
+DEFAULT_SHELL = "bash"
+DEFAULT_EDITOR = "vi"

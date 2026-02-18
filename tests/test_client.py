@@ -1,4 +1,7 @@
-# .. note:: warning: "If you modify features, API, or usage, you MUST update the documentation immediately."
+# #############################################################################
+# WARNING: If you modify features, API, or usage, you MUST update the
+# documentation immediately.
+# #############################################################################
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -7,6 +10,13 @@ from ectop.client import EcflowClient  # noqa: E402
 
 
 def test_client_init():
+    """
+    Test initialization of the EcflowClient.
+
+    Returns
+    -------
+    None
+    """
     with patch("ectop.client.ecflow.Client") as mock_client:
         client = EcflowClient("myhost", 1234)
         mock_client.assert_called_with("myhost", 1234)
@@ -15,12 +25,26 @@ def test_client_init():
 
 
 def test_client_init_failure():
+    """
+    Test failure handling during EcflowClient initialization.
+
+    Returns
+    -------
+    None
+    """
     with patch("ectop.client.ecflow.Client", side_effect=RuntimeError("Init failed")):
         with pytest.raises(RuntimeError, match="Failed to initialize ecFlow client"):
             EcflowClient("badhost", 1234)
 
 
 def test_client_ping_success():
+    """
+    Test successful ping of the ecFlow server.
+
+    Returns
+    -------
+    None
+    """
     with patch("ectop.client.ecflow.Client") as mock_client:
         client = EcflowClient()
         client.ping()
@@ -28,6 +52,13 @@ def test_client_ping_success():
 
 
 def test_client_ping_failure():
+    """
+    Test failure handling when pinging the ecFlow server.
+
+    Returns
+    -------
+    None
+    """
     with patch("ectop.client.ecflow.Client") as mock_client:
         client = EcflowClient()
         mock_client.return_value.ping.side_effect = RuntimeError("Connection refused")
@@ -36,6 +67,13 @@ def test_client_ping_failure():
 
 
 def test_client_sync_local_success():
+    """
+    Test successful local synchronization with the ecFlow server.
+
+    Returns
+    -------
+    None
+    """
     with patch("ectop.client.ecflow.Client") as mock_client:
         client = EcflowClient()
         client.sync_local()
@@ -43,6 +81,13 @@ def test_client_sync_local_success():
 
 
 def test_client_sync_local_failure():
+    """
+    Test failure handling during local synchronization.
+
+    Returns
+    -------
+    None
+    """
     with patch("ectop.client.ecflow.Client") as mock_client:
         client = EcflowClient()
         mock_client.return_value.sync_local.side_effect = RuntimeError("Sync error")
@@ -51,6 +96,13 @@ def test_client_sync_local_failure():
 
 
 def test_client_get_defs():
+    """
+    Test retrieval of definitions from the ecFlow client.
+
+    Returns
+    -------
+    None
+    """
     with patch("ectop.client.ecflow.Client") as mock_client:
         client = EcflowClient()
         mock_defs = MagicMock()
@@ -59,22 +111,43 @@ def test_client_get_defs():
 
 
 def test_client_file_success():
+    """
+    Test successful retrieval of a file from the ecFlow client.
+
+    Returns
+    -------
+    None
+    """
     with patch("ectop.client.ecflow.Client") as mock_client:
         client = EcflowClient()
-        mock_client.return_value.file.return_value = "file content"
+        mock_client.return_value.get_file.return_value = "file content"
         assert client.file("/path", "jobout") == "file content"
-        mock_client.return_value.file.assert_called_with("/path", "jobout")
+        mock_client.return_value.get_file.assert_called_with("/path", "jobout")
 
 
 def test_client_file_failure():
+    """
+    Test failure handling when retrieving a file from the ecFlow client.
+
+    Returns
+    -------
+    None
+    """
     with patch("ectop.client.ecflow.Client") as mock_client:
         client = EcflowClient()
-        mock_client.return_value.file.side_effect = RuntimeError("File not found")
+        mock_client.return_value.get_file.side_effect = RuntimeError("File not found")
         with pytest.raises(RuntimeError, match="Failed to retrieve jobout for /path"):
             client.file("/path", "jobout")
 
 
 def test_client_suspend_success():
+    """
+    Test successful suspension of a node.
+
+    Returns
+    -------
+    None
+    """
     with patch("ectop.client.ecflow.Client") as mock_client:
         client = EcflowClient()
         client.suspend("/path")
@@ -82,6 +155,13 @@ def test_client_suspend_success():
 
 
 def test_client_suspend_failure():
+    """
+    Test failure handling when suspending a node.
+
+    Returns
+    -------
+    None
+    """
     with patch("ectop.client.ecflow.Client") as mock_client:
         client = EcflowClient()
         mock_client.return_value.suspend.side_effect = RuntimeError("Error")
@@ -90,6 +170,13 @@ def test_client_suspend_failure():
 
 
 def test_client_resume_success():
+    """
+    Test successful resumption of a node.
+
+    Returns
+    -------
+    None
+    """
     with patch("ectop.client.ecflow.Client") as mock_client:
         client = EcflowClient()
         client.resume("/path")
@@ -97,6 +184,13 @@ def test_client_resume_success():
 
 
 def test_client_resume_failure():
+    """
+    Test failure handling when resuming a node.
+
+    Returns
+    -------
+    None
+    """
     with patch("ectop.client.ecflow.Client") as mock_client:
         client = EcflowClient()
         mock_client.return_value.resume.side_effect = RuntimeError("Error")
@@ -105,6 +199,13 @@ def test_client_resume_failure():
 
 
 def test_client_kill_success():
+    """
+    Test successful killing of a task.
+
+    Returns
+    -------
+    None
+    """
     with patch("ectop.client.ecflow.Client") as mock_client:
         client = EcflowClient()
         client.kill("/path")
@@ -112,6 +213,13 @@ def test_client_kill_success():
 
 
 def test_client_kill_failure():
+    """
+    Test failure handling when killing a task.
+
+    Returns
+    -------
+    None
+    """
     with patch("ectop.client.ecflow.Client") as mock_client:
         client = EcflowClient()
         mock_client.return_value.kill.side_effect = RuntimeError("Error")
@@ -120,6 +228,13 @@ def test_client_kill_failure():
 
 
 def test_client_force_complete_success():
+    """
+    Test successful force completion of a node.
+
+    Returns
+    -------
+    None
+    """
     with patch("ectop.client.ecflow.Client") as mock_client:
         client = EcflowClient()
         client.force_complete("/path")
@@ -127,6 +242,13 @@ def test_client_force_complete_success():
 
 
 def test_client_force_complete_failure():
+    """
+    Test failure handling when forcing completion of a node.
+
+    Returns
+    -------
+    None
+    """
     with patch("ectop.client.ecflow.Client") as mock_client:
         client = EcflowClient()
         mock_client.return_value.force_complete.side_effect = RuntimeError("Error")
@@ -135,6 +257,13 @@ def test_client_force_complete_failure():
 
 
 def test_client_alter_success():
+    """
+    Test successful alteration of a node attribute.
+
+    Returns
+    -------
+    None
+    """
     with patch("ectop.client.ecflow.Client") as mock_client:
         client = EcflowClient()
         client.alter("/path", "change", "var", "val")
@@ -142,6 +271,13 @@ def test_client_alter_success():
 
 
 def test_client_alter_failure():
+    """
+    Test failure handling when altering a node attribute.
+
+    Returns
+    -------
+    None
+    """
     with patch("ectop.client.ecflow.Client") as mock_client:
         client = EcflowClient()
         mock_client.return_value.alter.side_effect = RuntimeError("Error")
@@ -150,6 +286,13 @@ def test_client_alter_failure():
 
 
 def test_client_requeue_success():
+    """
+    Test successful requeuing of a node.
+
+    Returns
+    -------
+    None
+    """
     with patch("ectop.client.ecflow.Client") as mock_client:
         client = EcflowClient()
         client.requeue("/path")
@@ -157,6 +300,13 @@ def test_client_requeue_success():
 
 
 def test_client_requeue_failure():
+    """
+    Test failure handling when requeuing a node.
+
+    Returns
+    -------
+    None
+    """
     with patch("ectop.client.ecflow.Client") as mock_client:
         client = EcflowClient()
         mock_client.return_value.requeue.side_effect = RuntimeError("Error")

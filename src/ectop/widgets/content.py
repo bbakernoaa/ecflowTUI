@@ -18,6 +18,8 @@ from textual.app import ComposeResult
 from textual.containers import Vertical, VerticalScroll
 from textual.widgets import Input, RichLog, Static, TabbedContent, TabPane
 
+from ectop.constants import DEFAULT_SHELL, SYNTAX_THEME
+
 
 class MainContent(Vertical):
     """
@@ -32,6 +34,8 @@ class MainContent(Vertical):
         Whether live log updates are enabled.
     last_log_size : int
         The size of the log content at the last update.
+    _content_cache : dict[str, str]
+        Cache of the raw content for each tab for searching.
     """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -48,6 +52,11 @@ class MainContent(Vertical):
         super().__init__(*args, **kwargs)
         self.is_live: bool = False
         self.last_log_size: int = 0
+        self._content_cache: dict[str, str] = {
+            "tab_output": "",
+            "tab_script": "",
+            "tab_job": "",
+        }
 
     def compose(self) -> ComposeResult:
         """
@@ -109,11 +118,13 @@ class MainContent(Vertical):
             widget.clear()
             self.last_log_size = len(content)
             widget.write(content)
+            self._content_cache["tab_output"] = content
         else:
             new_content = content[self.last_log_size :]
             if new_content:
                 widget.write(new_content)
                 self.last_log_size = len(content)
+                self._content_cache["tab_output"] = content
 
     def update_script(self, content: str) -> None:
         """
@@ -124,8 +135,9 @@ class MainContent(Vertical):
         content : str
             The script content.
         """
+        self._content_cache["tab_script"] = content
         widget = self.query_one("#view_script", Static)
-        syntax = Syntax(content, "bash", theme="monokai", line_numbers=True)
+        syntax = Syntax(content, DEFAULT_SHELL, theme=SYNTAX_THEME, line_numbers=True)
         widget.update(syntax)
 
     def update_job(self, content: str) -> None:
@@ -137,8 +149,9 @@ class MainContent(Vertical):
         content : str
             The job content.
         """
+        self._content_cache["tab_job"] = content
         widget = self.query_one("#view_job", Static)
-        syntax = Syntax(content, "bash", theme="monokai", line_numbers=True)
+        syntax = Syntax(content, DEFAULT_SHELL, theme=SYNTAX_THEME, line_numbers=True)
         widget.update(syntax)
 
     def action_search(self) -> None:
@@ -178,10 +191,14 @@ class MainContent(Vertical):
             if not query:
                 return
 
-            self.app.notify(f"Searching for '{query}'...")
-            # For now, we just notify of matches.
-            # Real highlighting would require re-rendering content with markup.
-            # In a future update, we could implement a more sophisticated highlighter.
+            active_tab = str(self.active)
+            content = self._content_cache.get(active_tab, "")
+
+            if content:
+                count = content.lower().count(query.lower())
+                self.app.notify(f"Found {count} matches for '{query}' in {active_tab.replace('tab_', '')}")
+            else:
+                self.app.notify(f"No matches or no content for '{query}' in {active_tab.replace('tab_', '')}")
 
     def show_error(self, widget_id: str, message: str) -> None:
         """

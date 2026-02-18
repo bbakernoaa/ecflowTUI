@@ -1,10 +1,15 @@
-# .. note:: warning: "If you modify features, API, or usage, you MUST update the documentation immediately."
+# #############################################################################
+# WARNING: If you modify features, API, or usage, you MUST update the
+# documentation immediately.
+# #############################################################################
 """
 Tests for various features of ectop.
 
 .. note::
     If you modify features, API, or usage, you MUST update the documentation immediately.
 """
+
+from __future__ import annotations
 
 from unittest.mock import MagicMock, PropertyMock, patch
 
@@ -36,6 +41,10 @@ def test_app_bindings(app: Ectop) -> None:
     ----------
     app : Ectop
         The application instance.
+
+    Returns
+    -------
+    None
     """
     bindings = {b.key: b.action for b in app.BINDINGS}
     assert "/" in bindings
@@ -46,7 +55,13 @@ def test_app_bindings(app: Ectop) -> None:
 
 
 def test_search_logic() -> None:
-    """Test the search logic in SuiteTree."""
+    """
+    Test the search logic in SuiteTree.
+
+    Returns
+    -------
+    None
+    """
     # Create mock nodes
     node1 = MagicMock()
     node1.label = "task1"
@@ -92,7 +107,13 @@ def test_search_logic() -> None:
 
 
 def test_live_log_update() -> None:
-    """Test the live log update mechanism in MainContent."""
+    """
+    Test the live log update mechanism in MainContent.
+
+    Returns
+    -------
+    None
+    """
     content_area = MainContent()
     # Mock the RichLog widget
     rich_log = MagicMock()
@@ -108,7 +129,13 @@ def test_live_log_update() -> None:
 
 
 def test_why_inspector_parsing() -> None:
-    """Test trigger expression parsing in WhyInspector."""
+    """
+    Test trigger expression parsing in WhyInspector.
+
+    Returns
+    -------
+    None
+    """
     from ectop.widgets.modals.why import WhyInspector
 
     client = MagicMock()
@@ -123,7 +150,13 @@ def test_why_inspector_parsing() -> None:
 
 
 def test_variable_tweaker_refresh() -> None:
-    """Test variable refresh logic in VariableTweaker."""
+    """
+    Test variable refresh logic in VariableTweaker.
+
+    Returns
+    -------
+    None
+    """
     from ectop.widgets.modals.variables import VariableTweaker
 
     client = MagicMock()
@@ -132,9 +165,11 @@ def test_variable_tweaker_refresh() -> None:
     table = MagicMock()
     tweaker.query_one = MagicMock(return_value=table)
     # Mock app and call_from_thread
-    with patch.object(VariableTweaker, "app", new_callable=PropertyMock) as mock_app:
-        mock_app.return_value = MagicMock()
-        tweaker.call_from_thread = lambda f, *args, **kwargs: f(*args, **kwargs)
+    with patch.object(VariableTweaker, "app", new_callable=PropertyMock) as mock_app_prop:
+        mock_app = MagicMock()
+        mock_app.call_from_thread.side_effect = lambda f, *args, **kwargs: f(*args, **kwargs)
+        mock_app_prop.return_value = mock_app
+        tweaker.call_from_thread = mock_app.call_from_thread
 
         node = MagicMock()
         var1 = MagicMock()
@@ -142,7 +177,7 @@ def test_variable_tweaker_refresh() -> None:
         var1.value.return_value = "VAL1"
         node.variables = [var1]
         node.generated_variables = []
-        node.parent = None
+        node.get_parent.return_value = None
 
         client.get_defs.return_value.find_abs_node.return_value = node
 

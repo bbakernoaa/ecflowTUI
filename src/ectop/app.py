@@ -33,6 +33,7 @@ from ectop.constants import (
     COLOR_STATUS_BAR_BG,
     COLOR_TEXT,
     COLOR_TEXT_HIGHLIGHT,
+    DEFAULT_EDITOR,
     DEFAULT_HOST,
     DEFAULT_PORT,
     DEFAULT_REFRESH_INTERVAL,
@@ -685,7 +686,7 @@ class Ectop(App):
         old_content : str
             The original content of the script.
         """
-        editor = os.environ.get("EDITOR", "vi")
+        editor = os.environ.get("EDITOR", DEFAULT_EDITOR)
         with self.suspend():
             subprocess.run([editor, temp_path], check=False)
 

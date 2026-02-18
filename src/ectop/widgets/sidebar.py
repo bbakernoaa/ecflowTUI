@@ -12,7 +12,7 @@ Sidebar widget for the ecFlow suite tree.
 from __future__ import annotations
 
 import threading
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Callable
 
 import ecflow
 from rich.text import Text
@@ -61,7 +61,7 @@ class SuiteTree(Tree[str]):
         self.current_filter: str | None = None
         self.filters: list[str | None] = [None, "aborted", "active", "queued", "submitted", "suspended"]
 
-    def update_tree(self, client_host: str, client_port: int, defs: Defs | None) -> None:
+    def update_tree(self, client_host: str, client_port: int, defs: ecflow.Defs | None) -> None:
         """
         Rebuild the tree from ecFlow definitions using lazy loading.
 
@@ -185,7 +185,7 @@ class SuiteTree(Tree[str]):
 
         self.app.notify(f"Filter: {self.current_filter or 'All'}")
 
-    def _add_node_to_ui(self, parent_ui_node: TreeNode[str], ecflow_node: Node) -> TreeNode[str]:
+    def _add_node_to_ui(self, parent_ui_node: TreeNode[str], ecflow_node: ecflow.Node) -> TreeNode[str]:
         """
         Add a single ecflow node to the UI tree.
 
@@ -379,13 +379,13 @@ class SuiteTree(Tree[str]):
         else:
             self._safe_call(self.app.notify, f"No match found for '{query}'", severity="warning")
 
-    def _safe_call(self, callback: Any, *args: Any, **kwargs: Any) -> Any:
+    def _safe_call(self, callback: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
         """
         Safely call a UI-related function from either the main thread or a worker.
 
         Parameters
         ----------
-        callback : Any
+        callback : Callable[..., Any]
             The function to call.
         *args : Any
             Positional arguments.
