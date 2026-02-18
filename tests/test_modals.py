@@ -47,14 +47,18 @@ def test_variable_tweaker_inherited_logic(mock_client: MagicMock) -> None:
         The mock EcflowClient.
     """
     tweaker = VariableTweaker("/s1/f1/t1", mock_client)
-    tweaker.call_from_thread = lambda f, *args, **kwargs: f(*args, **kwargs)
+    # Mock app and call_from_thread
+    with patch.object(VariableTweaker, "app", new_callable=PropertyMock) as mock_app:
+        app_mock = MagicMock()
+        mock_app.return_value = app_mock
+        app_mock.call_from_thread = lambda f, *args, **kwargs: f(*args, **kwargs)
+        tweaker.call_from_thread = lambda f, *args, **kwargs: f(*args, **kwargs)
 
-    with patch.object(VariableTweaker, "app", new=MagicMock()):
         # Mock node structure
         task = MagicMock()
         task.name.return_value = "t1"
         task.variables = []
-        task.generated_variables = []
+        task.get_generated_variables.return_value = []
 
         family = MagicMock()
         family.name.return_value = "f1"
@@ -62,9 +66,9 @@ def test_variable_tweaker_inherited_logic(mock_client: MagicMock) -> None:
         var_f.name.return_value = "F_VAR"
         var_f.value.return_value = "F_VAL"
         family.variables = [var_f]
+        family.get_parent.return_value = None
 
-        task.parent = family
-        family.parent = None
+        task.get_parent.return_value = family
 
         mock_client.get_defs.return_value.find_abs_node.return_value = task
 
@@ -72,7 +76,7 @@ def test_variable_tweaker_inherited_logic(mock_client: MagicMock) -> None:
             table = MagicMock()
             mock_query.return_value = table
 
-            tweaker.refresh_vars()
+            tweaker._refresh_vars_logic()
 
             # Should have one row for inherited variable
             table.add_row.assert_called_once_with("F_VAR", "F_VAL", f"{VAR_TYPE_INHERITED} (f1)", key="inh_F_VAR")
@@ -131,19 +135,32 @@ def test_variable_tweaker_workers(mock_client: MagicMock) -> None:
     mock_client : MagicMock
         The mock EcflowClient.
     """
-    tweaker = VariableTweaker("/node", mock_client)
-    tweaker.call_from_thread = MagicMock(side_effect=lambda f, *args, **kwargs: f(*args, **kwargs))
-    with patch.object(VariableTweaker, "app", new=PropertyMock(return_value=MagicMock())), patch.object(tweaker, "refresh_vars"):
+    with patch.object(VariableTweaker, "app", new_callable=PropertyMock) as mock_app, \
+         patch.object(VariableTweaker, "refresh_vars") as mock_refresh:
+        app_mock = MagicMock()
+        mock_app.return_value = app_mock
+        app_mock.call_from_thread = lambda f, *args, **kwargs: f(*args, **kwargs)
+
+        tweaker = VariableTweaker("/node", mock_client)
+        tweaker.call_from_thread = lambda f, *args, **kwargs: f(*args, **kwargs)
+        # Mock query_one to avoid NoMatches errors in _submit_variable_logic
+        tweaker.query_one = MagicMock()
+
         # Call the logic methods directly for testing
         tweaker._delete_variable_logic("VAR1")
         mock_client.alter.assert_any_call("/node", "delete_variable", "VAR1")
+        mock_refresh.assert_called_once()
 
+        mock_refresh.reset_mock()
         tweaker._submit_variable_logic("NEWVAR=NEWVAL")
         mock_client.alter.assert_any_call("/node", "add_variable", "NEWVAR", "NEWVAL")
+        mock_refresh.assert_called_once()
 
+        mock_refresh.reset_mock()
         tweaker.selected_var_name = "EXISTING"
         tweaker._submit_variable_logic("UPDATED")
         mock_client.alter.assert_any_call("/node", "add_variable", "EXISTING", "UPDATED")
+        mock_refresh.assert_called_once()
 
 
 def test_why_inspector_worker(mock_client: MagicMock) -> None:
@@ -156,10 +173,15 @@ def test_why_inspector_worker(mock_client: MagicMock) -> None:
         The mock EcflowClient.
     """
     inspector = WhyInspector("/node", mock_client)
-    inspector.call_from_thread = MagicMock(side_effect=lambda f, *args, **kwargs: f(*args, **kwargs))
-    tree = MagicMock()
+    with patch.object(WhyInspector, "app", new_callable=PropertyMock) as mock_app:
+        app_mock = MagicMock()
+        mock_app.return_value = app_mock
+        app_mock.call_from_thread = lambda f, *args, **kwargs: f(*args, **kwargs)
+        inspector.call_from_thread = lambda f, *args, **kwargs: f(*args, **kwargs)
 
-    with patch.object(WhyInspector, "_populate_dep_tree"):
-        inspector._refresh_deps_logic(tree)
-        mock_client.sync_local.assert_called_once()
-        mock_client.get_defs.assert_called_once()
+        tree = MagicMock()
+
+        with patch.object(WhyInspector, "_populate_dep_tree"):
+            inspector._refresh_deps_logic(tree)
+            mock_client.sync_local.assert_called_once()
+            mock_client.get_defs.assert_called_once()

@@ -338,6 +338,17 @@ class SuiteTree(Tree[str]):
         -----
         This is a background worker.
         """
+        self._find_and_select_logic(query)
+
+    def _find_and_select_logic(self, query: str) -> None:
+        """
+        The actual search logic split out for testing.
+
+        Parameters
+        ----------
+        query : str
+            The search query.
+        """
         if not self.defs:
             return
 
@@ -356,7 +367,7 @@ class SuiteTree(Tree[str]):
         all_paths = self._all_paths_cache
 
         # Get current cursor state on main thread
-        cursor_node = self.cursor_node
+        cursor_node = getattr(self, "cursor_node", None)
         current_path = cursor_node.data if cursor_node else None
 
         start_index = 0

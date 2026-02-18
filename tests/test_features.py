@@ -87,7 +87,7 @@ def test_search_logic() -> None:
         # In the refactored find_and_select, it calls _select_by_path_logic
         tree._select_by_path_logic = MagicMock()
 
-        SuiteTree.find_and_select(tree, "post")
+        SuiteTree._find_and_select_logic(tree, "post")
         tree._select_by_path_logic.assert_called_with("/suite/post_proc")
 
 
@@ -133,7 +133,9 @@ def test_variable_tweaker_refresh() -> None:
     tweaker.query_one = MagicMock(return_value=table)
     # Mock app and call_from_thread
     with patch.object(VariableTweaker, "app", new_callable=PropertyMock) as mock_app:
-        mock_app.return_value = MagicMock()
+        app_mock = MagicMock()
+        mock_app.return_value = app_mock
+        app_mock.call_from_thread = lambda f, *args, **kwargs: f(*args, **kwargs)
         tweaker.call_from_thread = lambda f, *args, **kwargs: f(*args, **kwargs)
 
         node = MagicMock()
@@ -141,10 +143,10 @@ def test_variable_tweaker_refresh() -> None:
         var1.name.return_value = "VAR1"
         var1.value.return_value = "VAL1"
         node.variables = [var1]
-        node.generated_variables = []
-        node.parent = None
+        node.get_generated_variables.return_value = []
+        node.get_parent.return_value = None
 
         client.get_defs.return_value.find_abs_node.return_value = node
 
-        tweaker.refresh_vars()
+        tweaker._refresh_vars_logic()
         table.add_row.assert_any_call("VAR1", "VAL1", "User", key="VAR1")

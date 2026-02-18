@@ -61,15 +61,15 @@ def test_client_get_defs():
 def test_client_file_success():
     with patch("ectop.client.ecflow.Client") as mock_client:
         client = EcflowClient()
-        mock_client.return_value.file.return_value = "file content"
+        mock_client.return_value.get_file.return_value = "file content"
         assert client.file("/path", "jobout") == "file content"
-        mock_client.return_value.file.assert_called_with("/path", "jobout")
+        mock_client.return_value.get_file.assert_called_with("/path", "jobout")
 
 
 def test_client_file_failure():
     with patch("ectop.client.ecflow.Client") as mock_client:
         client = EcflowClient()
-        mock_client.return_value.file.side_effect = RuntimeError("File not found")
+        mock_client.return_value.get_file.side_effect = RuntimeError("File not found")
         with pytest.raises(RuntimeError, match="Failed to retrieve jobout for /path"):
             client.file("/path", "jobout")
 

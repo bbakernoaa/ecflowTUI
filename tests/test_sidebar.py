@@ -27,18 +27,18 @@ def mock_defs() -> MagicMock:
     defs = MagicMock()
     suite1 = MagicMock()
     suite1.name.return_value = "s1"
-    suite1.get_get_abs_node_path.return_value = "/s1"
+    suite1.get_abs_node_path.return_value = "/s1"
     suite1.get_state.return_value = "complete"
     suite1.nodes = []
 
     suite2 = MagicMock()
     suite2.name.return_value = "s2"
-    suite2.get_get_abs_node_path.return_value = "/s2"
+    suite2.get_abs_node_path.return_value = "/s2"
     suite2.get_state.return_value = "active"
 
     task2a = MagicMock()
     task2a.name.return_value = "t2a"
-    task2a.get_get_abs_node_path.return_value = "/s2/t2a"
+    task2a.get_abs_node_path.return_value = "/s2/t2a"
     task2a.get_state.return_value = "queued"
     task2a.nodes = []
 
@@ -197,28 +197,17 @@ def test_find_and_select_caching(mock_defs: MagicMock) -> None:
             # and test the logic separately if possible.
             # But here find_and_select contains the logic.
 
-            tree.find_and_select("t2a")
+            tree._find_and_select_logic("t2a")
             assert hasattr(tree, "_all_paths_cache")
             assert tree._all_paths_cache is not None
             assert "/s2/t2a" in tree._all_paths_cache
             # mock_select_logic should be called
-            # We might need a small sleep or join the worker, but let's see.
-            import time
-
-            for _ in range(10):
-                if mock_select_logic.called:
-                    break
-                time.sleep(0.1)
             mock_select_logic.assert_called_with("/s2/t2a")
 
             # Modify defs - but cache should persist until update_tree is called
             tree.defs.suites = []
             mock_select_logic.reset_mock()
-            tree.find_and_select("t2a")
-            for _ in range(10):
-                if mock_select_logic.called:
-                    break
-                time.sleep(0.1)
+            tree._find_and_select_logic("t2a")
             mock_select_logic.assert_called_with("/s2/t2a")  # Still works from cache
 
             # update_tree should clear cache
