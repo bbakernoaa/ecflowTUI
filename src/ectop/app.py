@@ -323,10 +323,26 @@ class Ectop(App):
         if event.node.data:
             self.action_load_node()
 
-    @work(thread=True)
     def _initial_connect(self) -> None:
         """
         Perform initial connection to the ecFlow server.
+
+        Returns
+        -------
+        None
+        """
+        tree = self.query_one("#suite_tree", SuiteTree)
+        self._initial_connect_worker(tree)
+
+    @work(thread=True)
+    def _initial_connect_worker(self, tree: SuiteTree) -> None:
+        """
+        Background worker for initial connection.
+
+        Parameters
+        ----------
+        tree : SuiteTree
+            The suite tree widget.
 
         Returns
         -------
@@ -340,10 +356,9 @@ class Ectop(App):
             self.ecflow_client = EcflowClient(self.host, self.port)
             self.ecflow_client.ping()
             # Initial refresh
-            self.action_refresh()
+            self.call_from_thread(self.action_refresh)
         except RuntimeError as e:
             self.call_from_thread(self.notify, f"{ERROR_CONNECTION_FAILED}: {e}", severity="error", timeout=10)
-            tree = self.query_one("#suite_tree", SuiteTree)
             self.call_from_thread(self._update_tree_error, tree)
         except Exception as e:
             self.call_from_thread(self.notify, f"Unexpected Error: {e}", severity="error")
@@ -750,12 +765,31 @@ class Ectop(App):
         """
         self.query_one("#main_content", MainContent).action_search()
 
-    @work(thread=True)
     def action_edit_script(self) -> None:
-        """Open the node script in an editor and update it on the server."""
+        """
+        Open the node script in an editor and update it on the server.
+
+        Returns
+        -------
+        None
+        """
         path = self.get_selected_path()
         if not path or not self.ecflow_client:
-            self.call_from_thread(self.notify, "No node selected", severity="warning")
+            self.notify("No node selected", severity="warning")
+            return
+        self._edit_script_worker(path)
+
+    @work(thread=True)
+    def _edit_script_worker(self, path: str) -> None:
+        """
+        Background worker to fetch script and prepare for editing.
+
+        Parameters
+        ----------
+        path : str
+            The ecFlow node path.
+        """
+        if not self.ecflow_client:
             return
 
         try:

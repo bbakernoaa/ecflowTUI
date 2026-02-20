@@ -11,6 +11,7 @@ Improved test coverage for ectop components.
 
 from __future__ import annotations
 
+import asyncio
 from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
@@ -77,7 +78,9 @@ async def test_variable_tweaker_add_logic() -> None:
     mock_app = MagicMock()
     mock_app.call_from_thread = lambda f, *args, **kwargs: f(*args, **kwargs)
 
-    with patch.object(VariableTweaker, "app", new_callable=PropertyMock) as mock_app_prop:
+    with patch.object(VariableTweaker, "app", new_callable=PropertyMock) as mock_app_prop, patch.object(
+        VariableTweaker, "refresh_vars"
+    ):
         mock_app_prop.return_value = mock_app
 
         # Test successful addition
@@ -109,7 +112,9 @@ async def test_variable_tweaker_delete_logic() -> None:
     mock_app = MagicMock()
     mock_app.call_from_thread = lambda f, *args, **kwargs: f(*args, **kwargs)
 
-    with patch.object(VariableTweaker, "app", new_callable=PropertyMock) as mock_app_prop:
+    with patch.object(VariableTweaker, "app", new_callable=PropertyMock) as mock_app_prop, patch.object(
+        VariableTweaker, "refresh_vars"
+    ):
         mock_app_prop.return_value = mock_app
 
         # Test successful deletion
@@ -138,13 +143,17 @@ async def test_variable_tweaker_error_handling() -> None:
     mock_app = MagicMock()
     mock_app.call_from_thread = lambda f, *args, **kwargs: f(*args, **kwargs)
 
-    with patch.object(VariableTweaker, "app", new_callable=PropertyMock) as mock_app_prop:
+    with patch.object(VariableTweaker, "app", new_callable=PropertyMock) as mock_app_prop, patch.object(
+        VariableTweaker, "refresh_vars"
+    ):
         mock_app_prop.return_value = mock_app
 
         # RuntimeError in sync
-        mock_client.sync_local.side_effect = RuntimeError("Sync Error")
-        tweaker._refresh_vars_logic()
-        mock_app.notify.assert_any_call("Error fetching variables: Sync Error", severity="error")
+        # We need _refresh_vars_logic for this part
+        with patch.object(VariableTweaker, "refresh_vars"):
+            mock_client.sync_local.side_effect = RuntimeError("Sync Error")
+            tweaker._refresh_vars_logic()
+            mock_app.notify.assert_any_call("Error fetching variables: Sync Error", severity="error")
 
         # RuntimeError in alter
         mock_client.alter.side_effect = RuntimeError("Alter Error")
@@ -190,23 +199,28 @@ async def test_app_server_actions() -> None:
     mock_client = MagicMock()
     with patch("ectop.app.EcflowClient", return_value=mock_client):
         app = Ectop()
-        # Mock call_from_thread to avoid thread-check issues in run_test
         app.call_from_thread = lambda callback, *args, **kwargs: callback(*args, **kwargs)
 
-        async with app.run_test() as pilot:
-            # Test Restart
-            with patch.object(Ectop, "action_refresh") as mock_refresh:
-                app.action_restart_server()
-                await pilot.pause()
-                mock_client.restart_server.assert_called_once()
-                mock_refresh.assert_called_once()
+        async def run_test_logic() -> None:
+            async with app.run_test() as pilot:
+                # We need to make sure ecflow_client is set
+                app.ecflow_client = mock_client
 
-            # Test Halt
-            with patch.object(Ectop, "action_refresh") as mock_refresh:
-                app.action_halt_server()
-                await pilot.pause()
-                mock_client.halt_server.assert_called_once()
-                mock_refresh.assert_called_once()
+                # Test Restart
+                with patch.object(Ectop, "action_refresh") as mock_refresh:
+                    app.action_restart_server()
+                    await pilot.pause()
+                    mock_client.restart_server.assert_called_once()
+                    mock_refresh.assert_called_once()
+
+                # Test Halt
+                with patch.object(Ectop, "action_refresh") as mock_refresh:
+                    app.action_halt_server()
+                    await pilot.pause()
+                    mock_client.halt_server.assert_called_once()
+                    mock_refresh.assert_called_once()
+
+        await asyncio.wait_for(run_test_logic(), timeout=10)
 
 
 @pytest.mark.asyncio
@@ -222,9 +236,13 @@ async def test_app_error_notifications() -> None:
         app = Ectop()
         app.call_from_thread = lambda f, *args, **kwargs: f(*args, **kwargs)
 
-        async with app.run_test() as pilot:
-            with patch.object(app, "notify") as mock_notify:
-                app._initial_connect()
-                await pilot.pause()
-                # Initial connect failure notification
-                mock_notify.assert_called_with("Connection Failed: Connection Refused", severity="error", timeout=10)
+        async def run_test_logic() -> None:
+            async with app.run_test() as pilot:
+                with patch.object(app, "notify") as mock_notify:
+                    # Explicitly call _initial_connect for test
+                    app._initial_connect()
+                    await pilot.pause()
+                    # Check if notification was called
+                    mock_notify.assert_called_with("Connection Failed: Connection Refused", severity="error", timeout=10)
+
+        await asyncio.wait_for(run_test_logic(), timeout=10)
