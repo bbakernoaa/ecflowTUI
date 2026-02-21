@@ -58,16 +58,21 @@ At the bottom of the screen, you will find the **Status Bar**. This provides cri
 The left sidebar shows the hierarchy of your suite. You can use the arrow keys to navigate and `Enter` to expand or collapse nodes. Icons next to node names indicate their current state (e.g., 🟢 for complete, 🔥 for active).
 
 ### Viewing Files
-Select a task (e.g., `tutorial/ingest/get_data`) and press `l`. `ectop` will fetch the script, the generated job, and any available log output, displaying them in the tabs on the right.
+Select a task (e.g., `tutorial/ingest/get_data`) and press `l` to **Load**. `ectop` will fetch the script, the generated job, and any available log output, displaying them in the tabs on the right.
 
 ### Managing Nodes
-Try suspending a family or task:
-1.  Select the `analysis` family.
-2.  Press `s` to **Suspend**. You will see the icon change to 🟠.
-3.  Press `u` to **Resume**.
+`ectop` provides full control over your ecFlow nodes:
+
+- **Suspend/Resume**: Select a node and press `s` to **Suspend** (🟠) or `u` to **Resume**.
+- **Kill**: If a task is stuck or running too long, press `k` to **Kill** it.
+- **Force Complete**: Press `f` to manually move a node to the **Complete** (🟢) state.
+- **Requeue**: Press `R` (**Shift + R**) to reset a node and its children, moving them back to the **Queued** (🔵) state.
 
 ### Live Log Updates
 If a task is running (Active 🔥), you can toggle live log tailing by pressing `t`. The `Output` tab will periodically refresh with new data from the server.
+
+### Searching within Content
+When viewing a large log file or complex script, press `Ctrl + F` to search within the current content tab. This will highlight matches and allow you to find specific strings quickly.
 
 ### Why is it queued?
 If a node is not running when you expect it to, select it and press `w`. The **Why Inspector** will show you the triggers or dependencies that are currently blocking it. This view recursively parses trigger expressions, highlighting exactly which parts of the logic are unmet.
@@ -92,8 +97,20 @@ Press `v` to open the **Variable Tweaker**.
 
 To override an inherited variable, simply add a new variable with the same name to the current node.
 
+### Utility Actions
+- **Copy Path**: Press `c` to copy the absolute ecFlow path of the selected node to your clipboard.
+- **Manual Refresh**: While `ectop` updates automatically, you can force a full sync of the suite tree by pressing `r`.
+
+### Server Control
+If you have administrative privileges, you can control the server's scheduling state:
+- **Halt Server**: Press `H` (**Shift + H**) to stop the server from scheduling any new tasks. The status bar will show `HALTED`.
+- **Start Server**: Press `S` (**Shift + S**) to resume scheduling. The status bar will show `RUNNING`.
+
 ### The Command Palette
 If you forget a keybinding, press `p` to open the **Command Palette**. This searchable interface allows you to execute any action by name (e.g., type "halt" to find the "Halt Server" command).
+
+### Quitting
+When you are finished, press `q` to safely exit `ectop`.
 
 ## Step 4: Editing Scripts on the Fly
 
