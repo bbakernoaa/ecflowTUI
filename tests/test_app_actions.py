@@ -12,8 +12,11 @@ Tests for Ectop action methods.
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
+
 import pytest
+
 from ectop.app import Ectop
+
 
 @pytest.fixture
 def app() -> Ectop:
@@ -22,23 +25,24 @@ def app() -> Ectop:
     app.ecflow_client = MagicMock()
     return app
 
+
 def test_action_restart_server(app: Ectop) -> None:
     """Test action_restart_server calls client and refresh."""
-    with patch.object(app, "action_refresh") as mock_refresh, \
-         patch.object(app, "call_from_thread") as mock_call:
+    with patch.object(app, "action_refresh") as mock_refresh, patch.object(app, "call_from_thread") as mock_call:
         app.action_restart_server()
         app.ecflow_client.restart_server.assert_called_once()
         mock_refresh.assert_called_once()
         mock_call.assert_called()
 
+
 def test_action_halt_server(app: Ectop) -> None:
     """Test action_halt_server calls client and refresh."""
-    with patch.object(app, "action_refresh") as mock_refresh, \
-         patch.object(app, "call_from_thread") as mock_call:
+    with patch.object(app, "action_refresh") as mock_refresh, patch.object(app, "call_from_thread") as mock_call:
         app.action_halt_server()
         app.ecflow_client.halt_server.assert_called_once()
         mock_refresh.assert_called_once()
         mock_call.assert_called()
+
 
 @pytest.mark.asyncio
 async def test_action_refresh_logic(app: Ectop) -> None:
@@ -48,13 +52,13 @@ async def test_action_refresh_logic(app: Ectop) -> None:
     mock_sb = MagicMock()
 
     def side_effect(selector, type=None):
-        if "#suite_tree" in selector: return mock_tree
-        if "#status_bar" in selector: return mock_sb
+        if "#suite_tree" in selector:
+            return mock_tree
+        if "#status_bar" in selector:
+            return mock_sb
         return MagicMock()
 
-    with patch.object(app, "query_one", side_effect=side_effect), \
-         patch.object(app, "call_from_thread") as mock_call:
-
+    with patch.object(app, "query_one", side_effect=side_effect), patch.object(app, "call_from_thread") as mock_call:
         app.ecflow_client.get_defs.return_value.get_server_state.return_value = "RUNNING"
         app.ecflow_client.server_version.return_value = "5.11.4"
 

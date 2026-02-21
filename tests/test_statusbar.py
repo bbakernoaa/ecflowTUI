@@ -11,10 +11,9 @@ Tests for the StatusBar widget.
 
 from __future__ import annotations
 
-import pytest
-from rich.text import Text
-from ectop.widgets.statusbar import StatusBar
 from ectop.constants import COLOR_STATUS_HALTED
+from ectop.widgets.statusbar import StatusBar
+
 
 def test_statusbar_initial_state() -> None:
     """Test initial state of StatusBar."""
@@ -24,6 +23,7 @@ def test_statusbar_initial_state() -> None:
     assert bar.server_version == "Unknown"
     assert bar.last_sync == "Never"
 
+
 def test_statusbar_update() -> None:
     """Test updating StatusBar values."""
     bar = StatusBar()
@@ -32,6 +32,7 @@ def test_statusbar_update() -> None:
     assert bar.status == "RUNNING"
     assert bar.server_version == "5.11.4"
     assert bar.last_sync != "Never"
+
 
 def test_statusbar_render_colors() -> None:
     """Test rendering colors for different statuses."""
@@ -54,6 +55,7 @@ def test_statusbar_render_colors() -> None:
     bar.update_status("h", 1, "CRITICAL ERROR")
     rendered = bar.render()
     assert any(span.style == "red" for span in rendered.spans)
+
 
 def test_statusbar_version_display() -> None:
     """Test that version is included in render."""
