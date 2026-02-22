@@ -26,9 +26,8 @@ dev = [
     "pip-tools",
 ]
 docs = [
-    "mkdocs",
+    "zensical",
     "mkdocstrings[python]",
-    "mkdocs-material",
 ]
 
 [project.scripts]
