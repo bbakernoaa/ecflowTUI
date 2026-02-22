@@ -8,4 +8,5 @@ dependencies:
   - rich>=13.0.0
   - pytest
   - pytest-asyncio
+  - zensical
   - pip

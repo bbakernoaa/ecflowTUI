@@ -62,6 +62,8 @@ class SuiteTree(Tree[str]):
         self.defs: Defs | None = None
         self.current_filter: str | None = None
         self.filters: list[str | None] = TREE_FILTERS
+        self.host: str = ""
+        self.port: int = 0
 
     def update_tree(self, client_host: str, client_port: int, defs: Defs | None) -> None:
         """
@@ -84,6 +86,8 @@ class SuiteTree(Tree[str]):
         -----
         This method is typically called from the main thread after a sync.
         """
+        self.host = client_host
+        self.port = client_port
         self.defs = defs
         self._all_paths_cache: list[str] | None = None
         self.clear()
@@ -184,24 +188,7 @@ class SuiteTree(Tree[str]):
 
         # We need to refresh the tree from local defs
         if self.defs:
-            # Parse host/port from current root label if possible, or just use placeholders
-            label_text = str(self.root.label)
-            host_port = "Unknown"
-            if ":" in label_text:
-                parts = label_text.split(" ")
-                for p in parts:
-                    if ":" in p:
-                        host_port = p
-                        break
-
-            if ":" in host_port:
-                host, port = host_port.split(":", 1)
-                # Remove filter suffix from port if present
-                if "[" in port:
-                    port = port.split("[")[0].strip()
-                self.update_tree(host, int(port), self.defs)
-            else:
-                self.update_tree("Server", 0, self.defs)
+            self.update_tree(self.host, self.port, self.defs)
 
         self.app.notify(f"Filter: {self.current_filter or 'All'}")
 
